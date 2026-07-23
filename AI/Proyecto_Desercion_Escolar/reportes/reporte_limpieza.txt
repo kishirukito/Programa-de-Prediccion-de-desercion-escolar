@@ -1,0 +1,92 @@
+=================================================================
+  REPORTE DE LIMPIEZA Y VALIDACION DE DATOS
+  Generado: 2026-07-22 14:18:23
+  Proyecto: Prediccion Desercion Escolar - Ingenieria en Software
+=================================================================
+
+[INFO GENERAL]
+  Filas      : 5,000
+  Columnas   : 20
+  Memoria    : 1049.9 KB
+
+  Tipos de datos:
+    id_estudiante                       str
+    promedio_general                    float64
+    promedio_actual                     float64
+    asistencia_promedio                 float64
+    materias_reprobadas                 int64
+    materias_recursadas                 int64
+    materias_inscritas                  int64
+    materias_aprobadas                  int64
+    cuatrimestre_actual                 int64
+    cuatrimestres_retraso               int64
+    parciales_reprobados                int64
+    calificacion_minima_parcial         float64
+    calificacion_maxima_parcial         float64
+    beneficiario_beca                   int64
+    turno                               int64
+    preferencia_carrera                 int64
+    foraneo                             int64
+    trabaja                             int64
+    edad_ingreso                        int64
+    desercion                           int64
+
+[VALORES FALTANTES]
+  Sin valores faltantes. Dataset completo.
+
+[DUPLICADOS]
+  Filas duplicadas detectadas: 0
+  Sin duplicados. Dataset integro.
+
+[UNICIDAD DE id_estudiante]
+  Total registros    : 5,000
+  IDs unicos         : 5,000
+  IDs duplicados     : 0
+  [OK] Todos los IDs son unicos.
+
+[VERIFICACION DE RANGOS]
+  [OK] promedio_general                    [5.0, 10.0]  fuera: 0
+  [OK] promedio_actual                     [5.0, 10.0]  fuera: 0
+  [OK] asistencia_promedio                 [0.4, 1.0]  fuera: 0
+  [OK] materias_reprobadas                 [0, 63]  fuera: 0
+  [OK] materias_recursadas                 [0, 63]  fuera: 0
+  [OK] materias_inscritas                  [1, 7]  fuera: 0
+  [OK] materias_aprobadas                  [0, 63]  fuera: 0
+  [OK] cuatrimestre_actual                 [1, 10]  fuera: 0
+  [OK] cuatrimestres_retraso               [0, 10]  fuera: 0
+  [OK] parciales_reprobados                [0, 200]  fuera: 0
+  [OK] calificacion_minima_parcial         [0.0, 10.0]  fuera: 0
+  [OK] calificacion_maxima_parcial         [0.0, 10.0]  fuera: 0
+  [OK] edad_ingreso                        [15, 50]  fuera: 0
+  [OK] beneficiario_beca                   [0, 1]  invalidos: 0
+  [OK] turno                               [0, 1, 2, 3]  invalidos: 0
+  [OK] preferencia_carrera                 [0, 1, 2]  invalidos: 0
+  [OK] foraneo                             [0, 1]  invalidos: 0
+  [OK] trabaja                             [0, 1]  invalidos: 0
+  [OK] desercion                           [0, 1]  invalidos: 0
+
+  Total de violaciones de rango: 0
+
+[INCONSISTENCIAS LOGICAS]
+  cal_min > cal_max              : 0
+  rep+apr > materias previas     : 0
+  recursadas > reprobadas        : 0
+  cuatrim.1 con reprobadas>0     : 0
+  Sin inconsistencias detectadas.
+
+[DETECCION DE OUTLIERS - METODO IQR]
+  promedio_general                     Q1=7.58  Q3=8.90  IQR=1.32  outliers=35 (0.7%)
+  promedio_actual                      Q1=7.62  Q3=8.87  IQR=1.25  outliers=34 (0.7%)
+  asistencia_promedio                  Q1=0.81  Q3=0.91  IQR=0.10  outliers=104 (2.1%)
+  parciales_reprobados                 Q1=2.00  Q3=25.00  IQR=23.00  outliers=276 (5.5%)
+  calificacion_minima_parcial          Q1=5.20  Q3=6.90  IQR=1.70  outliers=21 (0.4%)
+  calificacion_maxima_parcial          Q1=8.60  Q3=10.00  IQR=1.40  outliers=24 (0.5%)
+  edad_ingreso                         Q1=20.00  Q3=24.00  IQR=4.00  outliers=12 (0.2%)
+
+  Total de outliers detectados: 506  (no eliminados, se reportan)
+
+[GUARDADO DEL DATASET LIMPIO]
+  [OK] Guardado en: C:\Users\ios27\OneDrive\Escritorio\Codigo\AI\Proyecto_Desercion_Escolar\dataset\dataset_limpio.csv
+  Registros: 5,000  |  Columnas: 20
+
+=================================================================

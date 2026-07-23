@@ -16,7 +16,10 @@
     letter-spacing: -0.01em;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     font-family: 'Plus Jakarta Sans', sans-serif;
     letter-spacing: -0.025em;
   }
@@ -29,13 +32,22 @@
 }
 
 /* ── Scrollbar refinada ── */
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #c3c5d7;
   border-radius: 10px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #737686; }
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #737686;
+}
 
 /* ── Glassmorphism ── */
 .glass-card {
@@ -52,36 +64,72 @@
 
 /* ── Animaciones ── */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(1.4); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.4);
+  }
 }
 
-.animate-fade-in-up { animation: fadeInUp 0.4s ease both; }
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease both;
+}
 
-.stat-card { animation: fadeInUp 0.45s ease both; }
-.stat-card:nth-child(1) { animation-delay: 0s; }
-.stat-card:nth-child(2) { animation-delay: 0.08s; }
-.stat-card:nth-child(3) { animation-delay: 0.16s; }
+.stat-card {
+  animation: fadeInUp 0.45s ease both;
+}
 
-.dot-pulse { animation: pulse-dot 2s ease-in-out infinite; }
+.stat-card:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.stat-card:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.stat-card:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.dot-pulse {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
 
 /* ── Botón primario premium ── */
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm
-         text-white shadow-lg transition-all duration-200 active:scale-[0.97];
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white shadow-lg transition-all duration-200 active:scale-[0.97];
   background: linear-gradient(135deg, #1a56db 0%, #1649c0 100%);
   box-shadow: 0 4px 20px rgba(26, 86, 219, 0.35);
 }
+
 .btn-primary:hover {
   box-shadow: 0 6px 28px rgba(26, 86, 219, 0.50);
   transform: translateY(-1px);
@@ -89,10 +137,12 @@
 
 /* ── Card elevada ── */
 .card {
-  @apply bg-white rounded-2xl border border-outline-variant/60 shadow-sm
-         transition-shadow duration-200;
+  @apply bg-white rounded-2xl border border-gray-200/60 shadow-sm transition-shadow duration-200;
 }
-.card:hover { @apply shadow-md; }
+
+.card:hover {
+  @apply shadow-md;
+}
 
 /* ── Badge ── */
 .badge {

@@ -1,0 +1,94 @@
+=================================================================
+  REPORTE DE DATASET - DESERCION ESCOLAR
+  Generado: 2026-07-22 14:18:18
+  Carrera: Ingenieria en Software | 5,000 estudiantes
+=================================================================
+
+[1] DISTRIBUCION DE CLASES
+-----------------------------------------------------------------
+  Activos    (0): 4,162  (83.2%)
+  Desertores (1): 838  (16.8%)
+
+[2] ESTADISTICAS DESCRIPTIVAS
+-----------------------------------------------------------------
+                              media     std    min  mediana    max
+promedio_general              8.202   0.958   5.00     8.27   10.0
+promedio_actual               8.212   0.924   5.00     8.26   10.0
+asistencia_promedio           0.850   0.075   0.45     0.86    1.0
+materias_reprobadas           1.030   1.356   0.00     1.00   11.0
+materias_recursadas           0.697   0.963   0.00     0.00    8.0
+materias_inscritas            5.883   1.085   1.00     6.00    7.0
+materias_aprobadas           17.667  16.671   0.00    13.00   63.0
+cuatrimestre_actual           3.671   2.419   1.00     3.00   10.0
+cuatrimestres_retraso         0.446   0.559   0.00     0.00    3.0
+parciales_reprobados         17.417  20.406   0.00    11.00  131.0
+calificacion_minima_parcial   6.043   1.228   1.50     6.10    9.2
+calificacion_maxima_parcial   9.133   0.850   5.30     9.30   10.0
+beneficiario_beca             0.294   0.456   0.00     0.00    1.0
+turno                         0.897   0.987   0.00     1.00    3.0
+preferencia_carrera           0.667   0.798   0.00     0.00    2.0
+foraneo                       0.352   0.478   0.00     0.00    1.0
+trabaja                       0.454   0.498   0.00     0.00    1.0
+edad_ingreso                 22.341   2.714  17.00    22.00   33.0
+
+[3] CORRELACIONES CON desercion
+-----------------------------------------------------------------
+  Variable                                Corr
+  ----------------------------------- --------
+  asistencia_promedio                  -0.3243
+  promedio_actual                      -0.3234
+  promedio_general                     -0.3091
+  calificacion_maxima_parcial          -0.3090
+  calificacion_minima_parcial          -0.2420
+  beneficiario_beca                    -0.1133
+  materias_inscritas                   -0.0134
+  edad_ingreso                         -0.0010
+  turno                                +0.0057
+  foraneo                              +0.0441
+  trabaja                              +0.0976
+  materias_aprobadas                   +0.1427
+  preferencia_carrera                  +0.1804
+  cuatrimestre_actual                  +0.1819
+  cuatrimestres_retraso                +0.2871
+  parciales_reprobados                 +0.4051
+  materias_recursadas                  +0.4689
+  materias_reprobadas                  +0.5171
+
+[4] DISTRIBUCION DE MATERIAS REPROBADAS
+-----------------------------------------------------------------
+     0: 2,448  (49.0%)
+     1: 1,160  (23.2%)
+     2:   695  (13.9%)
+     3:   388  (7.8%)
+     4:   199  (4.0%)
+    5+:   110  (2.2%)
+  Media: 1.03  |  >4 reprobadas: 2.2%  (obj.<8%)
+
+[5] DISTRIBUCION DEL PROMEDIO ACTUAL
+-----------------------------------------------------------------
+     5-6:    69  (1.4%)
+     6-7:   436  (8.7%)
+     7-8: 1,399  (28.0%)
+     8-9: 2,045  (40.9%)
+    9-10: 1,051  (21.0%)
+  Media: 8.21  |  Std: 0.92
+
+[6] DISTRIBUCION DE ASISTENCIA PROMEDIO
+-----------------------------------------------------------------
+       <70%:   207  (4.1%)
+     70-80%:   913  (18.3%)
+     80-85%: 1,111  (22.2%)
+     85-90%: 1,376  (27.5%)
+     90-95%: 1,070  (21.4%)
+    95-100%:   323  (6.5%)
+  Media: 85.03%  |  Mediana: 85.97%
+
+[7] VALIDACIONES DE CALIDAD
+-----------------------------------------------------------------
+  Duplicados            : 0
+  Valores nulos         : 0
+  IDs unicos            : 5000
+  Promedios fuera [5,10]: 0
+  Asistencia fuera [0,1]: 0
+  Reprobadas > previas  : 0
+=================================================================

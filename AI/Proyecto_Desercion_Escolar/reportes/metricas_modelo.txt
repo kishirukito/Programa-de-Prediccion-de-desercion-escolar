@@ -1,0 +1,61 @@
+=================================================================
+  REPORTE DE EVALUACION - MODELO RANDOM FOREST
+  Generado: 2026-07-22 14:28:59
+  Proyecto: Prediccion Desercion Escolar - Ingenieria en Software
+=================================================================
+
+[1] HIPERPARAMETROS DEL MODELO
+-----------------------------------------------------------------
+  class_weight              = None
+  max_depth                 = 20
+  min_samples_leaf          = 2
+  min_samples_split         = 5
+  n_estimators              = 100
+
+[2] METRICAS EN VALIDACION (referencia, no para publicar)
+-----------------------------------------------------------------
+  Accuracy  : 0.8895
+  Precision : 0.7129
+  Recall    : 0.5714
+  F1-Score  : 0.6344
+  ROC-AUC   : 0.9188
+
+[3] METRICAS EN PRUEBA (resultado oficial)
+-----------------------------------------------------------------
+  Registros en prueba : 750
+  Activos reales      : 624
+  Desertores reales   : 126
+
+  Accuracy            : 0.8960
+  Precision           : 0.7400
+  Recall              : 0.5873
+  F1-Score            : 0.6549
+  ROC-AUC             : 0.8886
+  Average Precision   : 0.7007
+
+[4] REPORTE DE CLASIFICACION COMPLETO
+-----------------------------------------------------------------
+              precision    recall  f1-score   support
+
+      Activo       0.92      0.96      0.94       624
+    Desertor       0.74      0.59      0.65       126
+
+    accuracy                           0.90       750
+   macro avg       0.83      0.77      0.80       750
+weighted avg       0.89      0.90      0.89       750
+
+
+[5] MATRIZ DE CONFUSION
+-----------------------------------------------------------------
+                            Predicho_Activo  Predicho_Desertor
+  Real_Activo                           598                 26
+  Real_Desertor                          52                 74
+
+[6] GRAFICAS GENERADAS
+-----------------------------------------------------------------
+  graficas/matriz_confusion.png
+  graficas/roc_curve.png
+  graficas/precision_recall.png
+  graficas/importancia_variables.png
+
+=================================================================
