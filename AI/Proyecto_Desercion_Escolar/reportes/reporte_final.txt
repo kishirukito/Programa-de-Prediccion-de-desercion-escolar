@@ -1,6 +1,6 @@
 =================================================================
   REPORTE FINAL Y COMPARATIVO DE MODELOS
-  Fecha: 2026-07-22 15:59:13
+  Fecha: 2026-07-23 18:20:15
   Sistemas de Alerta Temprana — Desercion Escolar
 =================================================================
 
@@ -21,16 +21,16 @@ fp                  26.0000            99.0000
 fn                  52.0000            23.0000
 threshold            0.5000             0.4500
 training_time       51.8303          3968.0702
-inference_time      28.5091            27.7098
+inference_time      26.6308            27.5012
 
 [2] TIEMPOS DE COMPUTO
 -----------------------------------------------------------------
   Modelo Base:
     Tiempo Entrenamiento: 51.83 segundos
-    Tiempo Inferencia   : 28.5091 ms por pred.
+    Tiempo Inferencia   : 26.6308 ms por pred.
   Modelo Optimizado:
     Tiempo Entrenamiento: 66.13 minutos
-    Tiempo Inferencia   : 27.7098 ms por pred.
+    Tiempo Inferencia   : 27.5012 ms por pred.
 
 [3] INTERPRETACION Y RESPUESTAS AL NEGOCIO
 -----------------------------------------------------------------
@@ -57,5 +57,5 @@ inference_time      28.5091            27.7098
   1. Captura al 81.7% de estudiantes reales que abandonaran (Recall).
   2. Maximiza el F2-score (0.7295), que es la metrica optima para un Sistema de Alerta Temprana.
   3. Mantiene una Precision de 51.0%, evitando el desgaste institucional por falsas alarmas.
-  4. El tiempo de inferencia de 27.7098 ms es compatible con produccion en tiempo real.
+  4. El tiempo de inferencia de 27.5012 ms es compatible con produccion en tiempo real.
 =================================================================

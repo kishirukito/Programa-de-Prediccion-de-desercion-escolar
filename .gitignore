@@ -1,2 +1,5 @@
 .env
 node_modules
+.vite/
+dist/
+optmizacion.py
