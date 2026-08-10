@@ -3,46 +3,45 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 
 import MainLayout from './layouts/MainLayout';
 import LoginPage from './pages/LoginPage';
-import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
-import StudentsPage from './pages/StudentsPage';
-import ReportsPage from './pages/ReportsPage';
-import SettingsPage from './pages/SettingsPage';
-import AlertsPage from './pages/AlertsPage';
-import AttendancePage from './pages/AttendancePage';
-import GradesPage from './pages/GradesPage';
-import InterventionsPage from './pages/InterventionsPage';
+import ExpedientesPage from './pages/ExpedientesPage';
+import CapturPage from './pages/CapturPage';
+import AlertasPage from './pages/AlertasPage';
+import UsuariosPage from './pages/UsuariosPage';
+import RolesPage from './pages/RolesPage';
+import DocentesPage from './pages/DocentesPage';
+import ReportesPage from './pages/ReportesPage';
+
+import BaseDatosPage from './pages/BaseDatosPage';
 
 const ProtectedRoute = () => {
-    const token = localStorage.getItem('token');
-    return token ? <Outlet /> : <Navigate to="/login" replace />;
+  const token = localStorage.getItem('token');
+  return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 function App() {
-    return (
-        <BrowserRouter>
-            <Routes>
-                {/* Rutas públicas */}
-                <Route path="/" element={<Navigate to="/landing" replace />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/landing" element={<LandingPage />} />
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
 
-                {/* Rutas protegidas (con Sidebar y Header) */}
-                <Route element={<ProtectedRoute />}>
-                    <Route element={<MainLayout />}>
-                        <Route path="/dashboard" element={<DashboardPage />} />
-                        <Route path="/students" element={<StudentsPage />} />
-                        <Route path="/alerts" element={<AlertsPage />} />
-                        <Route path="/reports" element={<ReportsPage />} />
-                        <Route path="/attendance" element={<AttendancePage />} />
-                        <Route path="/grades" element={<GradesPage />} />
-                        <Route path="/interventions" element={<InterventionsPage />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                    </Route>
-                </Route>
-            </Routes>
-        </BrowserRouter>
-    );
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/expedientes" element={<ExpedientesPage />} />
+            <Route path="/captura" element={<CapturPage />} />
+            <Route path="/alertas" element={<AlertasPage />} />
+            <Route path="/usuarios" element={<UsuariosPage />} />
+            <Route path="/roles" element={<RolesPage />} />
+            <Route path="/docentes" element={<DocentesPage />} />
+            <Route path="/reportes"   element={<ReportesPage />} />
+            <Route path="/basedatos" element={<BaseDatosPage />} />
+          </Route>
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;

@@ -1,210 +1,518 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import TopHeader from '../components/TopHeader';
+import { api } from '../api';
 
-const statCards = [
-    {
-        label: 'Estudiantes en Riesgo',
-        value: '42',
-        delta: '+4% vs mes ant.',
-        icon: 'trending_down',
-        iconBg: 'bg-red-50',
-        iconColor: 'text-red-500',
-        accentColor: 'from-red-500 to-rose-600',
-        badge: 'bg-red-50 text-red-600 border border-red-100',
-        note: 'Requiere intervención inmediata',
-        noteIcon: 'info',
-    },
-    {
-        label: 'Asistencia Promedio',
-        value: '91.8%',
-        delta: 'Meta: 95%',
-        icon: 'event_available',
-        iconBg: 'bg-cyan-50',
-        iconColor: 'text-cyan-600',
-        accentColor: 'from-cyan-500 to-teal-500',
-        badge: 'bg-cyan-50 text-cyan-700 border border-cyan-100',
-        progress: 91.8,
-    },
-    {
-        label: 'Alertas IA Detectadas',
-        value: '12',
-        delta: '3 críticas · 9 preventivas',
-        icon: 'warning',
-        iconBg: 'bg-blue-50',
-        iconColor: 'text-blue-600',
-        accentColor: 'from-blue-500 to-indigo-600',
-        badge: 'bg-blue-50 text-blue-700 border border-blue-100',
-    },
-];
-
-const DashboardPage = () => {
-    return (
-        <>
-            <TopHeader title="Vista General" />
-            <div className="p-6 lg:p-8 space-y-6 animate-fade-in-up">
-
-                {/* Stat cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    {statCards.map((card, i) => (
-                        <div key={i} className="card stat-card p-6 flex flex-col gap-4 overflow-hidden relative">
-                            {/* Gradiente decorativo */}
-                            <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${card.accentColor} opacity-5 rounded-full -translate-y-8 translate-x-8 pointer-events-none`} />
-
-                            <div className="flex justify-between items-start">
-                                <div className={`w-10 h-10 ${card.iconBg} rounded-xl flex items-center justify-center`}>
-                                    <span className={`material-symbols-outlined ${card.iconColor}`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                                        {card.icon}
-                                    </span>
-                                </div>
-                                <span className={`badge ${card.badge}`}>{card.delta}</span>
-                            </div>
-
-                            <div>
-                                <p className="text-sm text-on-surface-variant font-medium">{card.label}</p>
-                                <p className="text-4xl font-extrabold text-on-surface mt-0.5">{card.value}</p>
-                            </div>
-
-                            {card.progress !== undefined && (
-                                <div>
-                                    <div className="w-full bg-surface-container-high h-1.5 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full bg-gradient-to-r ${card.accentColor} transition-all duration-700`}
-                                            style={{ width: `${card.progress}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-
-                            {card.note && (
-                                <p className="text-xs text-on-surface-variant flex items-center gap-1 -mt-1">
-                                    <span className="material-symbols-outlined text-xs">{card.noteIcon}</span>
-                                    {card.note}
-                                </p>
-                            )}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Gráfico + Alertas */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-
-                    {/* Gráfico de asistencia */}
-                    <div className="lg:col-span-8 card p-6">
-                        <div className="flex items-start justify-between mb-6">
-                            <div>
-                                <h3 className="text-lg font-bold text-on-surface">Tendencias de Asistencia</h3>
-                                <p className="text-sm text-on-surface-variant mt-0.5">Análisis predictivo basado en datos históricos</p>
-                            </div>
-                            <select className="bg-surface-container-low border border-outline-variant rounded-lg text-sm px-3 py-1.5 text-on-surface outline-none focus:ring-2 focus:ring-primary transition-all cursor-pointer">
-                                <option>Últimos 30 días</option>
-                                <option>Semestre Actual</option>
-                            </select>
-                        </div>
-
-                        {/* Barras */}
-                        <div className="flex items-end justify-between px-2 gap-2" style={{ height: '160px' }}>
-                            {[
-                                { val: 88, label: 'ENE' },
-                                { val: 92, label: 'FEB' },
-                                { val: 94, label: 'MAR' },
-                                { val: 91, label: 'ABR' },
-                                { val: 85, label: 'MAY' },
-                                { val: 96, label: 'JUN', projected: true },
-                            ].map((m, i) => (
-                                <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-                                    <div className="relative w-full flex items-end justify-center" style={{ height: '130px' }}>
-                                        {/* Tooltip */}
-                                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[11px] py-1 px-2.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-lg pointer-events-none z-10">
-                                            {m.projected ? `PROY. ${m.val}%` : `${m.val}%`}
-                                        </div>
-                                        <div
-                                            className={`w-full rounded-t-lg transition-all duration-500 ${
-                                                m.projected
-                                                    ? 'bg-gradient-to-t from-cyan-500 to-teal-400 opacity-80 animate-pulse'
-                                                    : 'bg-gradient-to-t from-blue-400 to-blue-300'
-                                            } group-hover:opacity-90`}
-                                            style={{ height: `${(m.val / 100) * 130}px` }}
-                                        />
-                                    </div>
-                                    <span className={`text-[10px] font-semibold ${m.projected ? 'text-cyan-600' : 'text-on-surface-variant'}`}>
-                                        {m.label}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Leyenda */}
-                        <div className="flex items-center gap-4 mt-4 pt-4 border-t border-outline-variant/50">
-                            <span className="flex items-center gap-1.5 text-xs text-on-surface-variant">
-                                <span className="w-3 h-3 rounded-sm bg-gradient-to-r from-blue-400 to-blue-300 inline-block" />
-                                Real
-                            </span>
-                            <span className="flex items-center gap-1.5 text-xs text-cyan-600 font-semibold">
-                                <span className="w-3 h-3 rounded-sm bg-gradient-to-r from-cyan-500 to-teal-400 inline-block" />
-                                Proyectado por IA
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Panel de alertas recientes */}
-                    <div className="lg:col-span-4 card p-6 flex flex-col overflow-hidden">
-                        <div className="flex items-center justify-between mb-5">
-                            <h3 className="font-bold text-on-surface flex items-center gap-2">
-                                <span className="w-2 h-2 bg-red-500 rounded-full dot-pulse" />
-                                Últimas Alertas
-                            </h3>
-                            <span className="badge bg-red-50 text-red-600 border border-red-100">3 nuevas</span>
-                        </div>
-
-                        <div className="space-y-3 overflow-y-auto flex-1 custom-scrollbar">
-                            {[
-                                {
-                                    type: 'Deserción Potencial',
-                                    title: 'Inactividad: Juan Pérez',
-                                    desc: '4 días consecutivos de ausencia en 10º B.',
-                                    color: 'bg-red-500',
-                                    badgeColor: 'bg-red-50 text-red-600',
-                                    time: 'Hace 2 h',
-                                },
-                                {
-                                    type: 'Académico',
-                                    title: 'Caída en Matemáticas',
-                                    desc: 'Lucía Méndez descendió su promedio 35%.',
-                                    color: 'bg-blue-500',
-                                    badgeColor: 'bg-blue-50 text-blue-600',
-                                    time: 'Hace 5 h',
-                                },
-                                {
-                                    type: 'Preventiva',
-                                    title: 'Bajo rendimiento grupal',
-                                    desc: '8°C muestra tendencia descendente en Ciencias.',
-                                    color: 'bg-amber-500',
-                                    badgeColor: 'bg-amber-50 text-amber-700',
-                                    time: 'Ayer',
-                                },
-                            ].map((alert, i) => (
-                                <div key={i} className="flex gap-3 p-3.5 rounded-xl bg-surface-container-lowest border border-outline-variant/40 hover:border-outline-variant transition-colors cursor-pointer group">
-                                    <div className={`w-1 self-stretch rounded-full ${alert.color} flex-shrink-0`} />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between gap-2 mb-0.5">
-                                            <span className={`badge ${alert.badgeColor} text-[10px]`}>{alert.type}</span>
-                                            <span className="text-[10px] text-on-surface-variant">{alert.time}</span>
-                                        </div>
-                                        <p className="text-sm font-semibold text-on-surface truncate">{alert.title}</p>
-                                        <p className="text-xs text-on-surface-variant mt-0.5 line-clamp-2">{alert.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <button className="mt-4 w-full text-center text-sm text-primary font-semibold hover:underline py-2">
-                            Ver todas las alertas →
-                        </button>
-                    </div>
-                </div>
+/* ──────────────────────────────────────────
+   CHARTS
+────────────────────────────────────────── */
+function RiskBarChart({ riesgo = {}, onSegmentClick }) {
+  const segments = [
+    { key: 'critico',   label: 'Crítico',   color: '#dc2626', bg: '#fef2f2' },
+    { key: 'alto',      label: 'Alto',      color: '#f59e0b', bg: '#fffbeb' },
+    { key: 'medio',     label: 'Medio',     color: '#3b82f6', bg: '#eff6ff' },
+    { key: 'bajo',      label: 'Bajo',      color: '#22c55e', bg: '#f0fdf4' },
+    { key: 'sin_datos', label: 'Sin datos', color: '#9ca3af', bg: '#f9fafb' },
+  ].map(s => ({ ...s, value: riesgo[s.key] || 0 }));
+  const total = segments.reduce((s, x) => s + x.value, 0) || 1;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      {segments.map((s, i) => {
+        const pct = Math.round(s.value / total * 100);
+        return (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: s.value > 0 ? 'pointer' : 'default' }}
+            onClick={() => s.value > 0 && onSegmentClick && onSegmentClick(s.key, s.label)}>
+            <div style={{ width: 60, fontSize: 11, fontWeight: 600, color: s.color, textAlign: 'right', flexShrink: 0 }}>{s.label}</div>
+            <div style={{ flex: 1, height: 16, background: s.bg, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+              <div style={{ width: `${pct}%`, height: '100%', background: s.color, borderRadius: 4, transition: 'width 0.6s ease', minWidth: s.value > 0 ? 3 : 0 }} />
+              {s.value > 0 && pct > 8 && (
+                <span style={{ position: 'absolute', left: `${Math.min(pct - 2, 80)}%`, top: '50%', transform: 'translateY(-50%) translateX(-100%)', fontSize: 10, fontWeight: 700, color: '#fff', paddingRight: 4 }}>{s.value}</span>
+              )}
             </div>
-        </>
-    );
-};
+            <div style={{ width: 30, fontSize: 10, color: 'var(--gray-400)', flexShrink: 0, textAlign: 'right' }}>{pct}%</div>
+          </div>
+        );
+      })}
+      <div style={{ marginTop: 4, padding: '5px 10px', background: 'var(--gray-50)', borderRadius: 6, textAlign: 'center', fontSize: 11, color: 'var(--gray-500)' }}>
+        Total: <strong style={{ color: 'var(--gray-800)' }}>{total}</strong> alumnos registrados
+      </div>
+    </div>
+  );
+}
 
-export default DashboardPage;
+function AcademicBarsChart({ evolucion = [], onBarClick }) {
+  if (!evolucion.length) return <div style={{ textAlign: 'center', color: '#9ca3af', padding: '24px 0', fontSize: 12 }}>Sin datos de calificaciones aún</div>;
+  const W = 380, H = 140, padL = 30, padB = 22, padT = 8, padR = 12;
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+  const maxAlumnos = Math.max(...evolucion.map(e => (e.aprobados || 0) + (e.reprobados || 0)), 1);
+  const groupW = innerW / evolucion.length;
+  const barW = Math.min(groupW * 0.22, 18);
+  const gap = barW * 0.35;
+  const yOf = v => padT + innerH - (Math.min(v, 100) / 100) * innerH;
+  const yOfCnt = v => padT + innerH - (Math.min(v, maxAlumnos) / maxAlumnos) * innerH;
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ overflow: 'visible' }}>
+        {[0, 25, 50, 75, 100].map(v => (
+          <g key={v}>
+            <line x1={padL} y1={yOf(v)} x2={W - padR} y2={yOf(v)} stroke="#f3f4f6" strokeWidth={1} />
+            <text x={padL - 3} y={yOf(v) + 3} fontSize={8} fill="#9ca3af" textAnchor="end">{v}</text>
+          </g>
+        ))}
+        {evolucion.map((e, gi) => {
+          const cx = padL + gi * groupW + groupW / 2;
+          const bars = [
+            { v: e.promedio_general || 0, yFn: yOf,    color: '#3b82f6' },
+            { v: e.aprobados  || 0,       yFn: yOfCnt, color: '#22c55e' },
+            { v: e.reprobados || 0,       yFn: yOfCnt, color: '#ef4444' },
+          ];
+          const startX = cx - (3 * barW + 2 * gap) / 2;
+          return (
+            <g key={gi} style={{ cursor: 'pointer' }} onClick={() => onBarClick && onBarClick(e)}>
+              {bars.map((b, bi) => {
+                const bx = startX + bi * (barW + gap);
+                const by = b.yFn(b.v);
+                const bh = Math.max(padT + innerH - by, 2);
+                return (
+                  <g key={bi}>
+                    <rect x={bx} y={by} width={barW} height={bh} fill={b.color} rx={2} opacity={0.88} />
+                    {bh > 12 && <text x={bx + barW / 2} y={by + 9} fontSize={7} fill="#fff" textAnchor="middle" fontWeight={700}>{Math.round(b.v)}</text>}
+                  </g>
+                );
+              })}
+              <text x={cx} y={H - 4} fontSize={9} fill="#9ca3af" textAnchor="middle">Parcial {e.parcial}</text>
+            </g>
+          );
+        })}
+      </svg>
+      <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 4 }}>
+        {[{ color: '#3b82f6', label: 'Promedio' }, { color: '#22c55e', label: 'Aprobados' }, { color: '#ef4444', label: 'Reprobados' }].map((l, i) => (
+          <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#4b5563' }}>
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: l.color, display: 'inline-block' }} />{l.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────
+   MODALES
+────────────────────────────────────────── */
+const nivelColor = { critico: '#dc2626', alto: '#f59e0b', medio: '#3b82f6', bajo: '#22c55e', sin_datos: '#9ca3af' };
+const nivelLabel = { critico: 'Crítico', alto: 'Alto', medio: 'Medio', bajo: 'Bajo', sin_datos: 'Sin datos' };
+const nivelCls   = { critico: 'badge badge-risk-critical badge-dot', alto: 'badge badge-risk-high badge-dot', medio: 'badge badge-risk-medium badge-dot', bajo: 'badge badge-risk-low badge-dot', sin_datos: 'badge badge-info badge-dot' };
+
+function Modal({ title, onClose, children, maxWidth = 560 }) {
+  return (
+    <div className="modal-overlay show" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal" style={{ maxWidth }}>
+        <div className="modal-header">
+          <h3 className="modal-title">{title}</h3>
+          <button className="modal-close" onClick={onClose}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>{children}</div>
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onClose}>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* Modal: lista de alumnos por nivel de riesgo */
+function ModalRiesgo({ nivelKey, alumnos, onClose }) {
+  const color = nivelColor[nivelKey] || '#9ca3af';
+  const label = nivelLabel[nivelKey] || nivelKey;
+  const lista = alumnos.filter(a => a.nivel_riesgo === nivelKey);
+  return (
+    <Modal title={`Alumnos en Riesgo ${label}`} onClose={onClose} maxWidth={600}>
+      {lista.length === 0
+        ? <p style={{ color: 'var(--gray-400)', textAlign: 'center', padding: '2rem' }}>No hay alumnos en este nivel.</p>
+        : <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {lista.map((a, i) => {
+              const ini = `${(a.nombre||'?')[0]}${(a.apellido_paterno||'?')[0]}`.toUpperCase();
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.625rem', border: '1px solid var(--gray-100)', borderRadius: 'var(--border-radius)', background: '#fff' }}>
+                  <div className="user-avatar" style={{ width: 36, height: 36, fontSize: '0.7rem', background: `${color}22`, color, flexShrink: 0 }}>{ini}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 500, color: 'var(--gray-800)', fontSize: '0.875rem' }}>{a.nombre} {a.apellido_paterno}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{a.matricula} · Prom: <strong>{a.promedio_general ?? 'N/A'}</strong> · Asist: <strong>{a.porcentaje_asistencia != null ? `${a.porcentaje_asistencia}%` : 'N/A'}</strong></div>
+                  </div>
+                  <span className={nivelCls[nivelKey] || 'badge badge-info badge-dot'}>{label}</span>
+                </div>
+              );
+            })}
+          </div>
+      }
+    </Modal>
+  );
+}
+
+/* Modal: detalle de parcial */
+function ModalParcial({ parcialData, onClose }) {
+  if (!parcialData) return null;
+  return (
+    <Modal title={`Detalle — Parcial ${parcialData.parcial}`} onClose={onClose} maxWidth={480}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.875rem' }}>
+        {[
+          { label: 'Total Alumnos',    value: parcialData.total_alumnos ?? '—', color: 'var(--primary-600)' },
+          { label: 'Promedio General', value: parcialData.promedio_general != null ? parcialData.promedio_general.toFixed(1) : '—', color: '#3b82f6' },
+          { label: 'Aprobados',        value: parcialData.aprobados ?? '—', color: 'var(--success)' },
+          { label: 'Reprobados',       value: parcialData.reprobados ?? '—', color: 'var(--danger)' },
+        ].map((item, i) => (
+          <div key={i} style={{ background: 'var(--gray-50)', border: '1px solid var(--gray-200)', borderRadius: 'var(--border-radius)', padding: '1rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 6 }}>{item.label}</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 700, color: item.color }}>{item.value}</div>
+          </div>
+        ))}
+      </div>
+      {parcialData.promedio_general != null && (
+        <div style={{ marginTop: '1rem' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginBottom: 6 }}>Tasa de aprobación</div>
+          <div style={{ height: 12, background: 'var(--gray-100)', borderRadius: 6, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${Math.round((parcialData.aprobados || 0) / ((parcialData.total_alumnos || 1)) * 100)}%`, background: 'var(--success)', borderRadius: 6, transition: 'width 0.6s ease' }} />
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: 4, textAlign: 'right' }}>
+            {Math.round((parcialData.aprobados || 0) / ((parcialData.total_alumnos || 1)) * 100)}% aprobados
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+/* Modal: detalle de materia */
+function ModalMateria({ materia, onClose }) {
+  if (!materia) return null;
+  const pct = materia.pct_reprobacion || 0;
+  return (
+    <Modal title={`Materia: ${materia.materia}`} onClose={onClose} maxWidth={460}>
+      <div style={{ marginBottom: '1rem', padding: '0.875rem', background: 'var(--gray-50)', borderRadius: 'var(--border-radius)', border: '1px solid var(--gray-200)' }}>
+        <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--gray-900)' }}>{materia.materia}</div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--gray-500)', marginTop: 2 }}>Clave: {materia.clave}</div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+        {[
+          { label: 'Total Alumnos', value: materia.total_alumnos, color: 'var(--primary-600)' },
+          { label: 'Promedio',      value: materia.promedio,      color: materia.promedio < 70 ? 'var(--danger)' : 'var(--success)' },
+          { label: 'Reprobados',    value: materia.reprobados,    color: 'var(--danger)' },
+        ].map((item, i) => (
+          <div key={i} style={{ background: '#fff', border: '1px solid var(--gray-200)', borderRadius: 'var(--border-radius)', padding: '0.75rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: item.color }}>{item.value}</div>
+          </div>
+        ))}
+      </div>
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--gray-600)', marginBottom: 6 }}>
+          <span>Porcentaje de reprobación</span>
+          <strong style={{ color: pct >= 30 ? 'var(--danger)' : 'var(--warning)' }}>{pct}%</strong>
+        </div>
+        <div style={{ height: 10, background: '#fee2e2', borderRadius: 6, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${Math.min(pct, 100)}%`, background: 'var(--danger)', borderRadius: 6, transition: 'width 0.6s ease' }} />
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/* Modal: estadísticas de asistencia */
+function ModalAsistencia({ promedio, onClose }) {
+  return (
+    <Modal title="Asistencia Promedio" onClose={onClose} maxWidth={420}>
+      <div style={{ textAlign: 'center', padding: '1.5rem 1rem' }}>
+        <div style={{ fontSize: '3.5rem', fontWeight: 800, color: promedio >= 80 ? 'var(--success)' : promedio >= 60 ? 'var(--warning)' : 'var(--danger)', lineHeight: 1 }}>{promedio}%</div>
+        <div style={{ fontSize: '0.875rem', color: 'var(--gray-500)', marginTop: 8 }}>Promedio general de asistencia del grupo</div>
+        <div style={{ marginTop: '1.5rem', height: 14, background: 'var(--gray-100)', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ height: '100%', width: `${Math.min(promedio, 100)}%`, background: promedio >= 80 ? 'var(--success)' : promedio >= 60 ? 'var(--warning)' : 'var(--danger)', borderRadius: 8, transition: 'width 0.8s ease' }} />
+        </div>
+        <div style={{ marginTop: '1.5rem', padding: '0.875rem', borderRadius: 'var(--border-radius)', background: promedio >= 80 ? 'var(--success-bg)' : promedio >= 60 ? 'var(--warning-bg)' : 'var(--danger-bg)', border: `1px solid ${promedio >= 80 ? 'var(--success-border)' : promedio >= 60 ? 'var(--warning-border)' : 'var(--danger-border)'}` }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: promedio >= 80 ? 'var(--success)' : promedio >= 60 ? 'var(--warning)' : 'var(--danger)' }}>
+            {promedio >= 80 ? 'Asistencia satisfactoria' : promedio >= 60 ? 'Asistencia en zona de alerta' : 'Asistencia crítica — requiere atención'}
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/* Modal: alertas pendientes */
+function ModalAlertas({ count, onClose }) {
+  return (
+    <Modal title="Alertas Pendientes" onClose={onClose} maxWidth={420}>
+      <div style={{ textAlign: 'center', padding: '1.5rem 1rem' }}>
+        <div style={{ fontSize: '3.5rem', fontWeight: 800, color: count > 0 ? '#7c3aed' : 'var(--success)', lineHeight: 1 }}>{count}</div>
+        <div style={{ fontSize: '0.875rem', color: 'var(--gray-500)', marginTop: 8 }}>alertas sin atender</div>
+        {count > 0 && (
+          <div style={{ marginTop: '1.5rem', padding: '0.875rem', borderRadius: 'var(--border-radius)', background: '#f5f3ff', border: '1px solid #e9d5ff' }}>
+            <div style={{ fontSize: '0.85rem', color: '#7c3aed', fontWeight: 600, marginBottom: 4 }}>Acción recomendada</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--gray-600)' }}>Ve a la sección de Alertas para revisar y atender cada caso pendiente.</div>
+          </div>
+        )}
+        {count === 0 && (
+          <div style={{ marginTop: '1.5rem', padding: '0.875rem', borderRadius: 'var(--border-radius)', background: 'var(--success-bg)', border: '1px solid var(--success-border)' }}>
+            <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: 600 }}>Sin alertas pendientes</div>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/* ──────────────────────────────────────────
+   PÁGINA PRINCIPAL
+────────────────────────────────────────── */
+export default function DashboardPage() {
+  const [data, setData]     = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [periodo, setPeriodo] = useState('2026-1');
+  const [grupo, setGrupo]   = useState('');
+
+  // Modales
+  const [modalRiesgo,    setModalRiesgo]    = useState(null); // { key, label }
+  const [modalParcial,   setModalParcial]   = useState(null); // parcialData
+  const [modalMateria,   setModalMateria]   = useState(null); // materiaData
+  const [modalAsistencia,setModalAsistencia]= useState(false);
+  const [modalAlertas,   setModalAlertas]   = useState(false);
+  const [modalEstudiantes,setModalEst]      = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await api.dashboard(`?periodo=${periodo}${grupo ? `&grupo_id=${grupo}` : ''}`);
+      if (res?.success) setData(res);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const d      = data?.data || {};
+  const filtros = data?.filtros || {};
+  const alumnos = d.alumnos_riesgo_recientes || [];
+
+  const statCards = [
+    {
+      label: 'ESTUDIANTES REGISTRADOS', value: d.total_estudiantes ?? '—', sub: 'Alumnos activos',
+      color: 'var(--primary-600)', bg: 'var(--primary-50)',
+      onClick: () => setModalEst(true),
+      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+    },
+    {
+      label: 'RIESGO ALTO', value: d.riesgo?.alto ?? '—', sub: 'Requieren atención',
+      color: '#ea580c', bg: '#fff7ed',
+      onClick: () => setModalRiesgo({ key: 'alto', label: 'Alto' }),
+      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+    },
+    {
+      label: 'RIESGO CRÍTICO', value: d.riesgo?.critico ?? '—', sub: 'Intervención urgente',
+      color: '#dc2626', bg: '#fef2f2',
+      onClick: () => setModalRiesgo({ key: 'critico', label: 'Crítico' }),
+      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>,
+    },
+    {
+      label: 'ASISTENCIA PROMEDIO', value: d.promedio_asistencia != null ? `${d.promedio_asistencia}%` : '—', sub: 'Porcentaje general',
+      color: '#16a34a', bg: '#f0fdf4',
+      onClick: () => setModalAsistencia(true),
+      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+    },
+    {
+      label: 'ALERTAS PENDIENTES', value: d.alertas_pendientes ?? '—', sub: 'Por atender',
+      color: '#7c3aed', bg: '#f5f3ff',
+      onClick: () => setModalAlertas(true),
+      icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+    },
+  ];
+
+  return (
+    <div>
+      <TopHeader title="Dashboard" />
+      <div className="page-content">
+
+        {/* Filtros */}
+        <div className="dashboard-filters">
+          <div className="filter-group">
+            <label>PERIODO</label>
+            <select value={periodo} onChange={e => setPeriodo(e.target.value)}>
+              {(filtros.periodos || ['2026-1','2025-2']).map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label>GRUPO</label>
+            <select value={grupo} onChange={e => setGrupo(e.target.value)}>
+              <option value="">Todos los grupos</option>
+              {(filtros.grupos || []).map(g => (
+                <option key={g.id} value={g.id}>{g.carrera_clave} {g.semestre}° &quot;{g.nombre}&quot;</option>
+              ))}
+            </select>
+          </div>
+          <button className="btn btn-primary" onClick={fetchData}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Actualizar
+          </button>
+        </div>
+
+        {loading ? (
+          <p style={{ color: 'var(--gray-500)', padding: '2rem' }}>Cargando...</p>
+        ) : (
+          <>
+            {/* Stat cards — clickeables */}
+            <div className="stats-grid stats-grid-5">
+              {statCards.map((c, i) => (
+                <div key={i} className="stat-card" onClick={c.onClick}
+                  style={{ cursor: 'pointer', transition: 'all 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                  <div className="stat-header">
+                    <span className="stat-label">{c.label}</span>
+                    <div className="stat-icon" style={{ background: c.bg, color: c.color }}>{c.icon}</div>
+                  </div>
+                  <div className="stat-value" style={{ color: c.color }}>{c.value}</div>
+                  <div className="stat-desc">{c.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Charts */}
+            <div className="dashboard-charts-row" style={{ marginTop: '1rem', alignItems: 'stretch' }}>
+              <div className="card chart-card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                <div className="chart-title" style={{ marginBottom: '0.75rem' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  Distribución de Niveles de Riesgo
+                  <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--gray-400)', fontWeight: 400 }}>Clic para ver alumnos</span>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <RiskBarChart riesgo={d.riesgo} onSegmentClick={(key, label) => setModalRiesgo({ key, label })} />
+                </div>
+              </div>
+              <div className="card chart-card" style={{ padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                <div className="chart-title" style={{ marginBottom: '0.75rem' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                  Evolución del Rendimiento por Parcial
+                  <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'var(--gray-400)', fontWeight: 400 }}>Clic para ver detalle</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <AcademicBarsChart evolucion={d.evolucion_rendimiento} onBarClick={e => setModalParcial(e)} />
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom */}
+            <div className="dashboard-bottom-row" style={{ marginTop: '1rem' }}>
+              <div className="card">
+                <div className="card-header">
+                  <h3 className="chart-title" style={{ margin: 0 }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    Materias con Mayor Reprobación
+                  </h3>
+                </div>
+                <div className="card-body" style={{ padding: 0 }}>
+                  <div className="table-wrapper">
+                    <table>
+                      <thead>
+                        <tr><th>Materia</th><th>Alumnos</th><th>Promedio</th><th>Reprobados</th><th>% Repro.</th></tr>
+                      </thead>
+                      <tbody>
+                        {(d.materias_reprobacion || []).length === 0
+                          ? <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-400)' }}>Sin datos</td></tr>
+                          : (d.materias_reprobacion || []).map((m, i) => (
+                            <tr key={i} style={{ cursor: 'pointer' }} onClick={() => setModalMateria(m)}
+                              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'}
+                              onMouseLeave={e => e.currentTarget.style.background = ''}>
+                              <td>
+                                <div style={{ fontWeight: 500, color: 'var(--gray-800)' }}>{m.materia}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{m.clave}</div>
+                              </td>
+                              <td>{m.total_alumnos}</td>
+                              <td style={{ color: 'var(--danger)', fontWeight: 700 }}>{m.promedio}</td>
+                              <td>{m.reprobados}</td>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <div style={{ flex: 1, height: 4, background: '#fee2e2', borderRadius: 2, minWidth: 40 }}>
+                                    <div style={{ width: `${Math.min(m.pct_reprobacion, 100)}%`, height: '100%', background: 'var(--danger)', borderRadius: 2 }} />
+                                  </div>
+                                  <span style={{ color: 'var(--danger)', fontWeight: 600, fontSize: '0.8rem', whiteSpace: 'nowrap' }}>{m.pct_reprobacion}%</span>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="card-header">
+                  <h3 className="chart-title" style={{ margin: 0 }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Alumnos en Riesgo Recientes
+                  </h3>
+                </div>
+                <div className="card-body">
+                  {alumnos.length === 0
+                    ? <div className="empty-state"><p>Sin alumnos en riesgo</p></div>
+                    : alumnos.map((a, i) => {
+                      const nk = a.nivel_riesgo || 'sin_datos';
+                      const color = nivelColor[nk] || '#9ca3af';
+                      const ini = `${(a.nombre||'?')[0]}${(a.apellido_paterno||'?')[0]}`.toUpperCase();
+                      return (
+                        <div key={i} className="risk-student-item" style={{ cursor: 'pointer' }}
+                          onClick={() => setModalRiesgo({ key: nk, label: nivelLabel[nk] || nk })}>
+                          <div className="risk-student-info">
+                            <div className="user-avatar" style={{ width: 36, height: 36, fontSize: '0.7rem', background: `${color}22`, color }}>{ini}</div>
+                            <div>
+                              <div style={{ fontWeight: 500, color: 'var(--gray-800)', fontSize: '0.875rem' }}>{a.nombre} {a.apellido_paterno}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{a.matricula} — Prom: {a.promedio_general ?? 'N/A'}</div>
+                            </div>
+                          </div>
+                          <span className={nivelCls[nk] || 'badge badge-info badge-dot'}>{nivelLabel[nk] || nk}</span>
+                        </div>
+                      );
+                    })
+                  }
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Modales ── */}
+      {modalRiesgo && (
+        <ModalRiesgo nivelKey={modalRiesgo.key} alumnos={d.alumnos_riesgo_recientes || []} onClose={() => setModalRiesgo(null)} />
+      )}
+      {modalParcial && (
+        <ModalParcial parcialData={modalParcial} onClose={() => setModalParcial(null)} />
+      )}
+      {modalMateria && (
+        <ModalMateria materia={modalMateria} onClose={() => setModalMateria(null)} />
+      )}
+      {modalAsistencia && (
+        <ModalAsistencia promedio={d.promedio_asistencia ?? 0} onClose={() => setModalAsistencia(false)} />
+      )}
+      {modalAlertas && (
+        <ModalAlertas count={d.alertas_pendientes ?? 0} onClose={() => setModalAlertas(false)} />
+      )}
+      {modalEstudiantes && (
+        <Modal title="Estudiantes Registrados" onClose={() => setModalEst(false)} maxWidth={460}>
+          <div style={{ textAlign: 'center', padding: '1.5rem 1rem' }}>
+            <div style={{ fontSize: '4rem', fontWeight: 800, color: 'var(--primary-600)', lineHeight: 1 }}>{d.total_estudiantes ?? 0}</div>
+            <div style={{ fontSize: '0.875rem', color: 'var(--gray-500)', marginTop: 8 }}>alumnos activos registrados</div>
+            <div style={{ marginTop: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '0.75rem' }}>
+              {Object.entries(d.riesgo || {}).map(([key, count]) => (
+                <div key={key} style={{ padding: '0.75rem', border: `1px solid ${nivelColor[key] || '#e5e7eb'}44`, borderRadius: 'var(--border-radius)', background: `${nivelColor[key] || '#9ca3af'}11` }}>
+                  <div style={{ fontSize: '0.7rem', color: nivelColor[key] || 'var(--gray-500)', fontWeight: 700, textTransform: 'uppercase' }}>{nivelLabel[key] || key}</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: nivelColor[key] || 'var(--gray-800)' }}>{count}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}

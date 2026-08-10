@@ -44,17 +44,7 @@ from sklearn.metrics import make_scorer
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-# ===========================================================================
-#  OPTIMIZACION CON INTEL EXTENSION FOR SCIKIT-LEARN
-# ===========================================================================
-try:
-    from sklearnex import patch_sklearn
-    patch_sklearn()
-    print("[INFO] Intel Extension for Scikit-learn activada (sklearnex)")
-except ImportError:
-    print("[INFO] Intel Extension no disponible - usando scikit-learn estándar")
-except Exception as e:
-    print(f"[INFO] Error al activar sklearnex: {e}")
+
 
 # ===========================================================================
 #  CONFIGURACION GLOBAL
