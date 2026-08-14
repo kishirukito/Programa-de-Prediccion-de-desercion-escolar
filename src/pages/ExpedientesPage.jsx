@@ -19,10 +19,12 @@ const nivelColor = {
 function indCls(val, type) {
   if (type === 'prom') {
     if (val == null) return '';
-    return val < 60 ? 'danger' : val < 70 ? 'warning' : 'success';
+    // Promedio en escala 0-10
+    return val < 6 ? 'danger' : val < 7 ? 'warning' : 'success';
   }
   if (type === 'asist') {
     if (val == null) return '';
+    // Asistencia en porcentaje 0-100
     return val < 60 ? 'danger' : val < 80 ? 'warning' : 'success';
   }
   if (type === 'reprob') {
@@ -32,25 +34,53 @@ function indCls(val, type) {
 }
 
 /* ── Modal de expediente ── */
-function ExpedienteModal({ alumno, onClose }) {
+function ExpedienteModal({ alumno, onClose, onAnalizar, loadingDetalle }) {
   if (!alumno) return null;
+  const [calculating, setCalculating] = React.useState(false);
+  const [msg, setMsg] = React.useState('');
+
   const nivel = nivelConfig[alumno.nivel_riesgo] || nivelConfig.sin_datos;
   const color = nivelColor[alumno.nivel_riesgo] || 'var(--gray-400)';
   const ini = `${(alumno.nombre||'?')[0]}${(alumno.apellido_paterno||'?')[0]}`.toUpperCase();
 
+  // Helper: muestra valor o 'Sin datos' si es null/undefined/0 para promedios
+  const fmt = (v, tipo) => {
+    if (v == null) return 'Sin datos';
+    if (tipo === 'prom'  && v === 0) return 'Sin datos';
+    if (tipo === 'asist') return `${v}%`;
+    if (tipo === 'prom')  return typeof v === 'number' ? v.toFixed(1) : v;
+    return v;
+  };
+
   const vars = [
-    { label: 'Promedio General',      value: alumno.promedio_general ?? 'N/A',                    cls: indCls(alumno.promedio_general, 'prom') },
-    { label: 'Asistencia %',          value: alumno.porcentaje_asistencia != null ? `${alumno.porcentaje_asistencia}%` : 'N/A', cls: indCls(alumno.porcentaje_asistencia, 'asist') },
-    { label: 'Materias Reprobadas',   value: alumno.materias_reprobadas ?? 0,                     cls: indCls(alumno.materias_reprobadas, 'reprob') },
-    { label: 'Parciales Reprobados',  value: alumno.parciales_reprobados ?? 0,                    cls: indCls(alumno.parciales_reprobados, 'reprob') },
+    { label: 'Promedio General',      value: fmt(alumno.promedio_general, 'prom'),             cls: alumno.promedio_general ? indCls(alumno.promedio_general, 'prom') : '' },
+    { label: 'Asistencia %',          value: fmt(alumno.porcentaje_asistencia, 'asist'),        cls: alumno.porcentaje_asistencia != null ? indCls(alumno.porcentaje_asistencia, 'asist') : '' },
+    { label: 'Materias Reprobadas',   value: alumno.materias_reprobadas ?? 0,                  cls: indCls(alumno.materias_reprobadas, 'reprob') },
+    { label: 'Parciales Reprobados',  value: alumno.parciales_reprobados ?? 0,                 cls: indCls(alumno.parciales_reprobados, 'reprob') },
     { label: 'Recursamiento',         value: alumno.recursamiento ? `Sí (${alumno.num_recursamiento || 1})` : 'No', cls: alumno.recursamiento ? 'warning' : 'success' },
-    { label: 'Calif. Parcial 1',      value: alumno.calificacion_p1 ?? 'Sin datos',               cls: indCls(alumno.calificacion_p1, 'prom') },
-    { label: 'Calif. Parcial 2',      value: alumno.calificacion_p2 ?? 'Sin datos',               cls: indCls(alumno.calificacion_p2, 'prom') },
-    { label: 'Calif. Parcial 3',      value: alumno.calificacion_p3 ?? 'Sin datos',               cls: indCls(alumno.calificacion_p3, 'prom') },
-    { label: 'Asistencia Parcial 1',  value: alumno.asistencia_p1 != null ? `${alumno.asistencia_p1}%` : 'Sin datos', cls: indCls(alumno.asistencia_p1, 'asist') },
-    { label: 'Asistencia Parcial 2',  value: alumno.asistencia_p2 != null ? `${alumno.asistencia_p2}%` : 'Sin datos', cls: indCls(alumno.asistencia_p2, 'asist') },
-    { label: 'Asistencia Parcial 3',  value: alumno.asistencia_p3 != null ? `${alumno.asistencia_p3}%` : 'Sin datos', cls: indCls(alumno.asistencia_p3, 'asist') },
+    { label: 'Calif. Mínima Parcial', value: fmt(alumno.calificacion_p1, 'prom'),              cls: alumno.calificacion_p1 ? indCls(alumno.calificacion_p1, 'prom') : '' },
+    { label: 'Calif. Máxima Parcial', value: fmt(alumno.calificacion_p3, 'prom'),              cls: alumno.calificacion_p3 ? indCls(alumno.calificacion_p3, 'prom') : '' },
+    { label: 'Calif. Parcial 2',      value: fmt(alumno.calificacion_p2, 'prom'),              cls: alumno.calificacion_p2 ? indCls(alumno.calificacion_p2, 'prom') : '' },
+    { label: 'Asistencia Materia',    value: fmt(alumno.asistencia_p1, 'asist'),                cls: alumno.asistencia_p1 != null ? indCls(alumno.asistencia_p1, 'asist') : '' },
+    { label: 'Prob. Deserción',       value: alumno.probabilidad_desercion != null ? `${Math.round(alumno.probabilidad_desercion * 100)}%` : 'Sin datos', cls: alumno.probabilidad_desercion > 0.7 ? 'danger' : alumno.probabilidad_desercion > 0.4 ? 'warning' : 'success' },
   ];
+
+  const triggerIA = async () => {
+    setCalculating(true);
+    setMsg('');
+    try {
+      const res = await onAnalizar(alumno.id);
+      if (res?.success) {
+        setMsg(`Análisis completado: ${res.data.estado_riesgo === 'riesgo_critico' ? 'Crítico' : res.data.estado_riesgo === 'riesgo_moderado' ? 'Moderado' : res.data.estado_riesgo === 'alerta_temprana' ? 'Alerta Temprana' : 'Estable'}`);
+      } else {
+        setMsg(res?.message || 'Error al ejecutar análisis');
+      }
+    } catch (e) {
+      setMsg('Error al conectar con el servidor');
+    } finally {
+      setCalculating(false);
+    }
+  };
 
   return (
     <div className="modal-overlay show" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -82,6 +112,14 @@ function ExpedienteModal({ alumno, onClose }) {
           </div>
 
           {/* Variables IA */}
+          {loadingDetalle && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', marginBottom: '0.5rem', color: 'var(--gray-400)', fontSize: '0.8rem' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14" style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }}>
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+              </svg>
+              Cargando datos detallados...
+            </div>
+          )}
           <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--gray-700)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
             Variables Clave del Modelo IA
           </div>
@@ -112,8 +150,22 @@ function ExpedienteModal({ alumno, onClose }) {
           </div>
         </div>
 
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose}>Cerrar</button>
+        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--primary-600)' }}>{msg}</div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn btn-secondary" onClick={onClose}>Cerrar</button>
+            <button 
+              className="btn btn-primary" 
+              onClick={triggerIA} 
+              disabled={calculating} 
+              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="13" height="13">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              {calculating ? 'Analizando...' : 'Analizar con IA'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -131,6 +183,50 @@ export default function ExpedientesPage() {
   const [filGrupo, setFilGrupo]     = useState('');
   const [filNivel, setFilNivel]     = useState('todos');
   const [alumnoModal, setAlumnoModal] = useState(null);
+  const [loadingModal, setLoadingModal] = useState(false);
+
+  const abrirExpediente = async (alumnoBase) => {
+    setAlumnoModal(alumnoBase);
+    setLoadingModal(true);
+    try {
+      const res = await api.expediente(alumnoBase.id);
+      if (res?.success && res.data) {
+        const d = res.data;
+        // Merge explícito: solo campos del detalle que necesita el modal
+        setAlumnoModal(prev => prev ? {
+          ...alumnoBase,
+          // Identidad
+          nombre: d.nombre || alumnoBase.nombre,
+          apellido_paterno: d.apellido_paterno || alumnoBase.apellido_paterno,
+          apellido_materno: d.apellido_materno || alumnoBase.apellido_materno,
+          matricula: d.matricula || alumnoBase.matricula,
+          carrera_clave: d.carrera_clave || alumnoBase.carrera_clave,
+          semestre: d.semestre || alumnoBase.semestre,
+          // Riesgo — usar el del detalle solo si es distinto de sin_datos
+          nivel_riesgo: (d.nivel_riesgo && d.nivel_riesgo !== 'sin_datos') ? d.nivel_riesgo : alumnoBase.nivel_riesgo,
+          // Variables clave — del detalle
+          promedio_general: d.promedio_general ?? alumnoBase.promedio_general,
+          porcentaje_asistencia: d.porcentaje_asistencia ?? alumnoBase.porcentaje_asistencia,
+          materias_reprobadas: d.materias_reprobadas ?? alumnoBase.materias_reprobadas,
+          parciales_reprobados: d.parciales_reprobados ?? 0,
+          recursamiento: d.recursamiento ?? false,
+          num_recursamiento: d.num_recursamiento ?? 0,
+          probabilidad_desercion: d.probabilidad_desercion,
+          // Por parcial
+          calificacion_p1: d.calificacion_p1 ?? null,
+          calificacion_p2: d.calificacion_p2 ?? null,
+          calificacion_p3: d.calificacion_p3 ?? null,
+          asistencia_p1: d.asistencia_p1 ?? null,
+          asistencia_p2: d.asistencia_p2 ?? null,
+          asistencia_p3: d.asistencia_p3 ?? null,
+        } : null);
+      }
+    } catch (e) {
+      console.error('Error cargando expediente:', e);
+    } finally {
+      setLoadingModal(false);
+    }
+  };
 
   const cargar = async (nivel = filNivel) => {
     setLoading(true);
@@ -144,6 +240,71 @@ export default function ExpedientesPage() {
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
+  };
+
+  const handleAnalizarIA = async (estudianteId) => {
+    try {
+      // Obtener el periodo_id real del alumno desde el objeto en memoria
+      const alumno = all.find(x => x.id === estudianteId);
+      // Usar el periodo del alumno si está disponible, si no intentar con el primer periodo activo
+      const periodoId = alumno?.periodo_id || '00000000-0000-0000-0000-000000000030';
+
+      const res = await api.supabaseCalcular(estudianteId, periodoId);
+
+      if (res?.success) {
+        // 1. Actualizar el modal inmediatamente con los datos de la predicción
+        //    sin esperar el re-fetch completo
+        setAlumnoModal(prev => prev ? {
+          ...prev,
+          nivel_riesgo: (() => {
+            const m = { riesgo_critico: 'critico', riesgo_moderado: 'alto', alerta_temprana: 'medio', estable: 'bajo' };
+            return m[res.data?.estado_riesgo] || prev.nivel_riesgo;
+          })(),
+          probabilidad_desercion: res.data?.probabilidad_desercion ?? prev.probabilidad_desercion,
+        } : prev);
+
+        // 2. Re-fetch en segundo plano para sincronizar la lista completa
+        const qs = `?riesgo=${filNivel}${filCarrera ? `&carrera_id=${filCarrera}` : ''}${filGrupo ? `&grupo_id=${filGrupo}` : ''}`;
+        api.expedientes(qs).then(refreshRes => {
+          if (refreshRes?.success) {
+            setAll(refreshRes.data || []);
+            const updated = refreshRes.data.find(x => x.id === estudianteId);
+            if (updated) setAlumnoModal(updated);
+          }
+        }).catch(() => {});
+      }
+
+      return res;
+    } catch (err) {
+      console.error('Error al invocar predicción IA:', err);
+      throw err;
+    }
+  };
+
+  const [analizandoTodos, setAnalizandoTodos] = useState(false);
+  const [progresoBatch, setProgresoBatch]     = useState({ actual: 0, total: 0, errores: 0 });
+
+  const handleAnalizarTodos = async () => {
+    const lista = all.filter(a => a.periodo_id); // solo los que tienen periodo conocido
+    if (!lista.length) return;
+    setAnalizandoTodos(true);
+    setProgresoBatch({ actual: 0, total: lista.length, errores: 0 });
+
+    let errores = 0;
+    for (let i = 0; i < lista.length; i++) {
+      const alumno = lista[i];
+      try {
+        await api.supabaseCalcular(alumno.id, alumno.periodo_id);
+      } catch (_) {
+        errores++;
+      }
+      setProgresoBatch({ actual: i + 1, total: lista.length, errores });
+    }
+
+    // Re-fetch final para actualizar toda la lista
+    const qs = `?riesgo=${filNivel}${filCarrera ? `&carrera_id=${filCarrera}` : ''}${filGrupo ? `&grupo_id=${filGrupo}` : ''}`;
+    api.expedientes(qs).then(r => { if (r?.success) setAll(r.data || []); }).catch(() => {});
+    setAnalizandoTodos(false);
   };
 
   useEffect(() => { cargar(); }, []);
@@ -189,6 +350,34 @@ export default function ExpedientesPage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="text" placeholder="Buscar por nombre o matrícula..." value={buscar} onChange={e => setBuscar(e.target.value)} />
             </div>
+
+            {/* Botón analizar todos */}
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={handleAnalizarTodos}
+              disabled={analizandoTodos || !all.length}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', whiteSpace: 'nowrap' }}
+            >
+              {analizandoTodos ? (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13"
+                    style={{ animation: 'spin 1s linear infinite' }}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                  </svg>
+                  {progresoBatch.actual}/{progresoBatch.total}
+                  {progresoBatch.errores > 0 && ` · ${progresoBatch.errores} errores`}
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  Analizar todos con IA ({all.length})
+                </>
+              )}
+            </button>
           </div>
         </div>
 
@@ -256,7 +445,7 @@ export default function ExpedientesPage() {
                         </td>
                         <td style={{ textAlign: 'right' }}>
                           <button className="btn btn-ghost btn-sm" style={{ color: 'var(--primary-600)' }}
-                            onClick={() => setAlumnoModal(a)}>
+                            onClick={() => abrirExpediente(a)}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             Ver Expediente
                           </button>
@@ -273,7 +462,7 @@ export default function ExpedientesPage() {
       </div>
 
       {/* Modal */}
-      <ExpedienteModal alumno={alumnoModal} onClose={() => setAlumnoModal(null)} />
+      <ExpedienteModal alumno={alumnoModal} onClose={() => setAlumnoModal(null)} onAnalizar={handleAnalizarIA} loadingDetalle={loadingModal} />
     </div>
   );
 }

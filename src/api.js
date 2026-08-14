@@ -36,19 +36,30 @@ export const api = {
   expediente: (id) => apiFetch(`/expedientes/${id}`),
 
   // Captura
+  capturaGrupos: () => apiFetch('/captura/grupos'),
   asignaciones: () => apiFetch('/captura/asignaciones'),
   alumnosGrupo: (grupoId) => apiFetch(`/captura/alumnos?grupo_id=${grupoId}`),
+  resumenGrupo: (grupoId, materiaId, periodoId) =>
+    apiFetch(`/captura/resumen-grupo?grupo_id=${grupoId}${materiaId ? `&materia_id=${materiaId}` : ''}${periodoId ? `&periodo_id=${periodoId}` : ''}`),
   calificacionesGrupo: (grupoId, materiaId) => apiFetch(`/captura/calificaciones?grupo_id=${grupoId}&materia_id=${materiaId}`),
+  calificacionesMateria: (materiaId, periodoId) => apiFetch(`/captura/calificaciones?materia_id=${materiaId}${periodoId ? `&periodo_id=${periodoId}` : ''}`),
+  asistenciasMateria: (materiaId, periodoId) => apiFetch(`/captura/asistencias?materia_id=${materiaId}${periodoId ? `&periodo_id=${periodoId}` : ''}`),
   guardarCaptura: (body) => apiFetch('/captura/guardar', { method: 'POST', body: JSON.stringify(body) }),
 
   // Alertas
   alertas: () => apiFetch('/alertas'),
   atenderAlerta: (id) => apiFetch(`/alertas/${id}/atender`, { method: 'POST', body: '{}' }),
+  updateAlerta: (id, body) => apiFetch(`/alertas/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  generarAlertas: () => apiFetch('/alertas/generar', { method: 'POST', body: '{}' }),
+  contarAlertas: () => apiFetch('/alertas/count'),
 
   // Usuarios
   usuarios: () => apiFetch('/usuarios'),
   crearUsuario: (body) => apiFetch('/usuarios', { method: 'POST', body: JSON.stringify(body) }),
   toggleUsuario: (id) => apiFetch(`/usuarios/${id}/estado`, { method: 'PATCH', body: '{}' }),
+  getUsuario: (id) => apiFetch(`/usuarios/${id}`),
+  editarUsuario: (id, body) => apiFetch(`/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  eliminarUsuario: (id) => apiFetch(`/usuarios/${id}`, { method: 'DELETE' }),
 
   // Roles
   roles: () => apiFetch('/roles'),
@@ -57,27 +68,14 @@ export const api = {
   docentes: () => apiFetch('/docentes'),
   crearDocente: (body) => apiFetch('/docentes', { method: 'POST', body: JSON.stringify(body) }),
   eliminarDocente: (id) => apiFetch(`/docentes/${id}`, { method: 'DELETE' }),
-
-  // Reportes
-  reportesDatos: () => apiFetch('/reportes/datos'),
-  generarReporte: (tipo, extra = '') => apiFetch(`/reportes/preview?tipo=${tipo}${extra}`),
-
-  // Extra alertas
-  updateAlerta: (id, body) => apiFetch(`/alertas/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  generarAlertas: () => apiFetch('/alertas/generar', { method: 'POST', body: '{}' }),
-  contarAlertas: () => apiFetch('/alertas/count'),
-
-  // Extra usuarios
-  getUsuario: (id) => apiFetch(`/usuarios/${id}`),
-  editarUsuario: (id, body) => apiFetch(`/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  eliminarUsuario: (id) => apiFetch(`/usuarios/${id}`, { method: 'DELETE' }),
-
-  // Docentes tabs
   asignacionesDocente: () => apiFetch('/docentes/asignaciones'),
   tutoriasDocente: () => apiFetch('/docentes/tutorias'),
   asignarTutor: (body) => apiFetch('/docentes/asignar-tutor', { method: 'POST', body: JSON.stringify(body) }),
   eliminarAsignacion: (id) => apiFetch(`/docentes/asignaciones/${id}`, { method: 'DELETE' }),
-  generarReporte: (tipo, filtros = '') => apiFetch(`/reportes?tipo=${tipo}${filtros}`),
+
+  // Reportes
+  reportesDatos: () => apiFetch('/reportes/datos'),
+  generarReporte: (tipo, extra = '') => apiFetch(`/reportes/preview?tipo=${tipo}${extra}`),
 
   // Supabase
   supabaseStatus: () => apiFetch('/supabase/status'),
@@ -87,20 +85,4 @@ export const api = {
   supabasePeriodos: () => apiFetch('/supabase/periodos'),
   supabaseCalcular: (estudianteId, periodoId) => apiFetch('/supabase/calcular-resumen', { method: 'POST', body: JSON.stringify({ estudianteId, periodoId }) }),
   carreras: () => apiFetch('/catalogos/carreras'),
-
-  // Alertas (nuevas)
-  updateAlerta: (id, body) => apiFetch(`/alertas/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  generarAlertas: () => apiFetch('/alertas/generar', { method: 'POST', body: '{}' }),
-  contarAlertas: () => apiFetch('/alertas/count'),
-
-  // Usuarios (nuevas)
-  editarUsuario: (id, body) => apiFetch(`/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  eliminarUsuario: (id) => apiFetch(`/usuarios/${id}`, { method: 'DELETE' }),
-  getUsuario: (id) => apiFetch(`/usuarios/${id}`),
-
-  // Docentes (nuevas)
-  asignacionesDocente: () => apiFetch('/docentes/asignaciones'),
-  tutoriasDocente: () => apiFetch('/docentes/tutorias'),
-  asignarTutor: (body) => apiFetch('/docentes/asignar-tutor', { method: 'POST', body: JSON.stringify(body) }),
-  eliminarAsignacion: (id) => apiFetch(`/docentes/asignaciones/${id}`, { method: 'DELETE' }),
 };

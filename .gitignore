@@ -3,3 +3,12 @@ dist/
 .env
 *.log
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Modelos entrenados (archivos grandes) — excluir todos menos el optimizado
+*.pkl
+!AI/Proyecto_Desercion_Escolar/modelos/random_forest_optimizado.pkl

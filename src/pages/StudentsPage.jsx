@@ -1,67 +1,80 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TopHeader from '../components/TopHeader';
+import { api } from '../api';
 
-const initialStudents = [
-    { name: 'Elena Martínez', email: 'elena.mtz@edu.predict', id: '#2024-0412', prog: 'Ing. Civil', status: 'RIESGO CRÍTICO', risk: 42, color: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
-    { name: 'Ricardo Gómez', email: 'r.gomez@edu.predict', id: '#2024-0985', prog: 'Psicología', status: 'ALERTA TEMPRANA', risk: 68, color: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
-    { name: 'Sofía Ortiz', email: 's.ortiz@edu.predict', id: '#2024-1122', prog: 'Sistemas', status: 'ESTABLE', risk: 94, color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-    { name: 'Carlos Mendoza', email: 'c.mendoza@edu.predict', id: '#2024-1540', prog: 'Mecatrónica', status: 'RIESGO CRÍTICO', risk: 38, color: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
-    { name: 'Mariana López', email: 'm.lopez@edu.predict', id: '#2024-0721', prog: 'Industrial', status: 'ESTABLE', risk: 91, color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-    { name: 'Gabriel Torres', email: 'g.torres@edu.predict', id: '#2024-2033', prog: 'Sistemas', status: 'ALERTA TEMPRANA', risk: 72, color: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },
-];
+// Map API nivel_riesgo → display properties
+const RIESGO_MAP = {
+  critico:   { label: 'RIESGO CRÍTICO',  color: 'bg-red-100 text-red-700',       dot: 'bg-red-500' },
+  alto:      { label: 'RIESGO ALTO',     color: 'bg-orange-100 text-orange-700', dot: 'bg-orange-500' },
+  medio:     { label: 'ALERTA TEMPRANA', color: 'bg-amber-100 text-amber-800',   dot: 'bg-amber-500' },
+  bajo:      { label: 'ESTABLE',         color: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
+  sin_datos: { label: 'SIN DATOS',       color: 'bg-gray-100 text-gray-600',     dot: 'bg-gray-400' },
+};
+
+function nivelProps(nivel_riesgo) {
+  return RIESGO_MAP[nivel_riesgo] || RIESGO_MAP.sin_datos;
+}
+
+// Map API student → display shape
+function mapStudent(a) {
+  const props = nivelProps(a.nivel_riesgo);
+  const risk = a.porcentaje_asistencia != null
+    ? Math.round(a.porcentaje_asistencia)
+    : (a.promedio_general != null ? Math.round((a.promedio_general / 10) * 100) : 0);
+  return {
+    id:     a.id,
+    name:   `${a.nombre} ${a.apellido_paterno}`.trim(),
+    email:  a.matricula || '—',
+    matId:  a.matricula,
+    prog:   a.carrera_nombre || a.carrera_clave || '—',
+    status: props.label,
+    risk,
+    color:  props.color,
+    dot:    props.dot,
+    nivel_riesgo: a.nivel_riesgo,
+    promedio: a.promedio_general,
+    asistencia: a.porcentaje_asistencia,
+  };
+}
+
+const STATUS_FILTERS = ['TODOS', 'RIESGO CRÍTICO', 'RIESGO ALTO', 'ALERTA TEMPRANA', 'ESTABLE'];
 
 const StudentsPage = () => {
     const [view, setView] = useState('table');
-    const [students, setStudents] = useState(initialStudents);
+    const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('TODOS');
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    // Form state
-    const [newStudent, setNewStudent] = useState({
-        name: '',
-        email: '',
-        prog: 'Sistemas',
-        status: 'ESTABLE',
-        risk: 85
-    });
+    useEffect(() => {
+        const cargar = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const res = await api.expedientes();
+                if (res?.success) {
+                    setStudents((res.data || []).map(mapStudent));
+                } else {
+                    setError(res?.message || 'No se pudieron cargar los estudiantes.');
+                }
+            } catch (e) {
+                console.error(e);
+                setError(e.message || 'Error de conexión con el servidor.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        cargar();
+    }, []);
 
     const filteredStudents = students.filter(s => {
         const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                               s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              s.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
                               s.prog.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'TODOS' || s.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
-
-    const handleAddStudent = (e) => {
-        e.preventDefault();
-        if (!newStudent.name || !newStudent.email) return;
-
-        let color = 'bg-emerald-100 text-emerald-700';
-        let dot = 'bg-emerald-500';
-        if (newStudent.status === 'RIESGO CRÍTICO') {
-            color = 'bg-red-100 text-red-700';
-            dot = 'bg-red-500';
-        } else if (newStudent.status === 'ALERTA TEMPRANA') {
-            color = 'bg-amber-100 text-amber-800';
-            dot = 'bg-amber-500';
-        }
-
-        const idNum = Math.floor(1000 + Math.random() * 9000);
-        const created = {
-            ...newStudent,
-            id: `#2024-${idNum}`,
-            risk: Number(newStudent.risk),
-            color,
-            dot
-        };
-
-        setStudents([created, ...students]);
-        setIsAddModalOpen(false);
-        setNewStudent({ name: '', email: '', prog: 'Sistemas', status: 'ESTABLE', risk: 85 });
-    };
 
     return (
         <>
@@ -92,14 +105,6 @@ const StudentsPage = () => {
                                 <span className="material-symbols-outlined text-xl">grid_view</span>
                             </button>
                         </div>
-
-                        <button
-                            onClick={() => setIsAddModalOpen(true)}
-                            className="btn-primary"
-                        >
-                            <span className="material-symbols-outlined">person_add</span>
-                            Añadir Estudiante
-                        </button>
                     </div>
                 </div>
 
@@ -109,7 +114,7 @@ const StudentsPage = () => {
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
                         <input
                             type="text"
-                            placeholder="Buscar estudiante, correo o ID..."
+                            placeholder="Buscar por nombre, matrícula o carrera..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-9 pr-4 py-2 bg-surface-container-low border border-outline-variant rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
@@ -118,7 +123,7 @@ const StudentsPage = () => {
 
                     <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
                         <span className="text-xs font-semibold text-on-surface-variant uppercase whitespace-nowrap">Filtrar por:</span>
-                        {['TODOS', 'RIESGO CRÍTICO', 'ALERTA TEMPRANA', 'ESTABLE'].map((st) => (
+                        {STATUS_FILTERS.map((st) => (
                             <button
                                 key={st}
                                 onClick={() => setStatusFilter(st)}
@@ -134,35 +139,46 @@ const StudentsPage = () => {
                     </div>
                 </div>
 
-                {/* Table View */}
-                {view === 'table' ? (
+                {/* Error */}
+                {error && (
+                    <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+                        <span className="material-symbols-outlined text-lg">error</span>
+                        {error}
+                    </div>
+                )}
+
+                {/* Loading */}
+                {loading ? (
+                    <div className="card p-12 flex items-center justify-center gap-3 text-on-surface-variant text-sm">
+                        <span className="material-symbols-outlined animate-spin text-2xl">progress_activity</span>
+                        Cargando estudiantes...
+                    </div>
+                ) : view === 'table' ? (
+                    /* Table View */
                     <div className="card overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="border-b border-outline-variant bg-surface-container-low text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                                         <th className="p-4">Estudiante</th>
-                                        <th className="p-4">Programa</th>
+                                        <th className="p-4">Carrera</th>
                                         <th className="p-4">Estado IA</th>
-                                        <th className="p-4 text-center">Rendimiento</th>
-                                        <th className="p-4 text-right">Acciones</th>
+                                        <th className="p-4 text-center">Asistencia</th>
+                                        <th className="p-4 text-center">Promedio</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-outline-variant/60">
                                     {filteredStudents.length > 0 ? (
-                                        filteredStudents.map((std, i) => (
-                                            <tr key={i} className="hover:bg-surface-container-low/50 transition-colors">
+                                        filteredStudents.map((std) => (
+                                            <tr key={std.id} className="hover:bg-surface-container-low/50 transition-colors">
                                                 <td className="p-4">
                                                     <div className="flex items-center gap-3">
                                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${std.color}`}>
-                                                            {std.name.split(' ').map(n => n[0]).join('')}
+                                                            {std.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                                         </div>
                                                         <div>
                                                             <p className="font-bold text-on-surface text-sm">{std.name}</p>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-xs text-on-surface-variant">{std.email}</span>
-                                                                <span className="text-[10px] bg-surface-container px-1.5 py-0.5 rounded font-mono text-outline">{std.id}</span>
-                                                            </div>
+                                                            <span className="text-[10px] bg-surface-container px-1.5 py-0.5 rounded font-mono text-outline">{std.matId}</span>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -175,16 +191,16 @@ const StudentsPage = () => {
                                                 </td>
                                                 <td className="p-4">
                                                     <div className="flex flex-col items-center gap-1 w-28 mx-auto">
-                                                        <span className="text-xs font-bold text-on-surface">{std.risk}%</span>
+                                                        <span className="text-xs font-bold text-on-surface">
+                                                            {std.asistencia != null ? `${std.asistencia}%` : '—'}
+                                                        </span>
                                                         <div className="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
-                                                            <div className={`h-full ${std.dot}`} style={{ width: `${std.risk}%` }} />
+                                                            <div className={`h-full ${std.dot}`} style={{ width: `${std.asistencia ?? 0}%` }} />
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="p-4 text-right">
-                                                    <button className="p-2 hover:bg-surface-container-high rounded-lg text-outline hover:text-on-surface transition-colors">
-                                                        <span className="material-symbols-outlined text-lg">more_vert</span>
-                                                    </button>
+                                                <td className="p-4 text-center text-sm font-bold text-on-surface">
+                                                    {std.promedio != null ? std.promedio.toFixed(1) : '—'}
                                                 </td>
                                             </tr>
                                         ))
@@ -198,23 +214,26 @@ const StudentsPage = () => {
                                 </tbody>
                             </table>
                         </div>
+                        <div className="px-4 py-2 border-t border-outline-variant bg-surface-container-low text-xs text-on-surface-variant">
+                            {filteredStudents.length} de {students.length} estudiantes
+                        </div>
                     </div>
                 ) : (
                     /* Grid View */
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {filteredStudents.map((std, i) => (
-                            <div key={i} className="card p-5 flex flex-col justify-between gap-4 relative overflow-hidden group">
+                        {filteredStudents.map((std) => (
+                            <div key={std.id} className="card p-5 flex flex-col justify-between gap-4 relative overflow-hidden group">
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-base shadow-sm ${std.color}`}>
-                                            {std.name.split(' ').map(n => n[0]).join('')}
+                                            {std.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-on-surface text-base group-hover:text-primary transition-colors">{std.name}</h4>
                                             <p className="text-xs text-on-surface-variant">{std.prog}</p>
                                         </div>
                                     </div>
-                                    <span className="text-[10px] font-mono text-outline bg-surface-container px-2 py-0.5 rounded-md">{std.id}</span>
+                                    <span className="text-[10px] font-mono text-outline bg-surface-container px-2 py-0.5 rounded-md">{std.matId}</span>
                                 </div>
 
                                 <div className="space-y-2 pt-2 border-t border-outline-variant/50">
@@ -227,125 +246,28 @@ const StudentsPage = () => {
                                     </div>
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-xs font-semibold">
-                                            <span className="text-on-surface-variant">Rendimiento:</span>
-                                            <span className="text-on-surface">{std.risk}%</span>
+                                            <span className="text-on-surface-variant">Asistencia:</span>
+                                            <span className="text-on-surface">{std.asistencia != null ? `${std.asistencia}%` : '—'}</span>
                                         </div>
                                         <div className="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
-                                            <div className={`h-full ${std.dot}`} style={{ width: `${std.risk}%` }} />
+                                            <div className={`h-full ${std.dot}`} style={{ width: `${std.asistencia ?? 0}%` }} />
                                         </div>
                                     </div>
-                                </div>
-
-                                <div className="flex items-center justify-between pt-2">
-                                    <span className="text-xs text-on-surface-variant truncate max-w-[180px]">{std.email}</span>
-                                    <button className="text-xs font-semibold text-primary hover:underline">Ver Expediente →</button>
+                                    <div className="flex justify-between text-xs font-semibold">
+                                        <span className="text-on-surface-variant">Promedio:</span>
+                                        <span className="text-on-surface">{std.promedio != null ? std.promedio.toFixed(1) : '—'}</span>
+                                    </div>
                                 </div>
                             </div>
                         ))}
+                        {filteredStudents.length === 0 && (
+                            <div className="col-span-full p-8 text-center text-on-surface-variant">
+                                No se encontraron estudiantes que coincidan con la búsqueda.
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
-
-            {/* Modal Añadir Estudiante */}
-            {isAddModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in-up">
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-outline-variant space-y-4">
-                        <div className="flex justify-between items-center border-b border-outline-variant pb-3">
-                            <h3 className="text-lg font-bold text-on-surface">Añadir Nuevo Estudiante</h3>
-                            <button
-                                onClick={() => setIsAddModalOpen(false)}
-                                className="text-outline hover:text-on-surface transition-colors"
-                            >
-                                <span className="material-symbols-outlined">close</span>
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleAddStudent} className="space-y-4">
-                            <div>
-                                <label className="text-xs font-semibold text-on-surface-variant block mb-1">Nombre Completo</label>
-                                <input
-                                    type="text"
-                                    required
-                                    placeholder="Ej. Ana María Torres"
-                                    value={newStudent.name}
-                                    onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
-                                    className="w-full px-3.5 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-semibold text-on-surface-variant block mb-1">Correo Institucional</label>
-                                <input
-                                    type="email"
-                                    required
-                                    placeholder="ejemplo@edu.predict"
-                                    value={newStudent.email}
-                                    onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
-                                    className="w-full px-3.5 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-xs font-semibold text-on-surface-variant block mb-1">Programa</label>
-                                    <select
-                                        value={newStudent.prog}
-                                        onChange={(e) => setNewStudent({ ...newStudent, prog: e.target.value })}
-                                        className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm outline-none"
-                                    >
-                                        <option value="Sistemas">Sistemas</option>
-                                        <option value="Ing. Civil">Ing. Civil</option>
-                                        <option value="Psicología">Psicología</option>
-                                        <option value="Mecatrónica">Mecatrónica</option>
-                                        <option value="Industrial">Industrial</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="text-xs font-semibold text-on-surface-variant block mb-1">Estado IA</label>
-                                    <select
-                                        value={newStudent.status}
-                                        onChange={(e) => setNewStudent({ ...newStudent, status: e.target.value })}
-                                        className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant rounded-xl text-sm outline-none"
-                                    >
-                                        <option value="ESTABLE">ESTABLE</option>
-                                        <option value="ALERTA TEMPRANA">ALERTA TEMPRANA</option>
-                                        <option value="RIESGO CRÍTICO">RIESGO CRÍTICO</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-semibold text-on-surface-variant block mb-1">Rendimiento Estimado ({newStudent.risk}%)</label>
-                                <input
-                                    type="range"
-                                    min="10"
-                                    max="100"
-                                    value={newStudent.risk}
-                                    onChange={(e) => setNewStudent({ ...newStudent, risk: e.target.value })}
-                                    className="w-full accent-primary cursor-pointer"
-                                />
-                            </div>
-
-                            <div className="flex justify-end gap-3 pt-3 border-t border-outline-variant">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsAddModalOpen(false)}
-                                    className="px-4 py-2 text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="btn-primary py-2 px-5 text-sm"
-                                >
-                                    Guardar Estudiante
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </>
     );
 };

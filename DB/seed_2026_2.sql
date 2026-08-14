@@ -1,0 +1,186 @@
+-- ============================================================
+-- EduPredict AI — Script Completo: Periodo 2026_2
+-- Docentes, Tutores, Grupos, Asignaciones, Calificaciones
+-- + FIX: Row Level Security en resumen_academico
+-- Ejecuta este script en el SQL Editor de Supabase:
+-- https://supabase.com/dashboard/project/pdovigscngfiijthrxjq/sql
+-- ============================================================
+
+-- ============================================================
+-- PASO 0: CORREGIR RLS EN resumen_academico y otras tablas
+-- Error: "new row violates row-level security policy"
+-- ============================================================
+
+ALTER TABLE resumen_academico ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "resumen_select_all" ON resumen_academico;
+DROP POLICY IF EXISTS "resumen_insert_all" ON resumen_academico;
+DROP POLICY IF EXISTS "resumen_update_all" ON resumen_academico;
+DROP POLICY IF EXISTS "resumen_delete_all" ON resumen_academico;
+CREATE POLICY "resumen_select_all" ON resumen_academico FOR SELECT USING (true);
+CREATE POLICY "resumen_insert_all" ON resumen_academico FOR INSERT WITH CHECK (true);
+CREATE POLICY "resumen_update_all" ON resumen_academico FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "resumen_delete_all" ON resumen_academico FOR DELETE USING (true);
+
+ALTER TABLE predicciones_desercion ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "pred_select" ON predicciones_desercion;
+DROP POLICY IF EXISTS "pred_insert" ON predicciones_desercion;
+DROP POLICY IF EXISTS "pred_update" ON predicciones_desercion;
+CREATE POLICY "pred_select" ON predicciones_desercion FOR SELECT USING (true);
+CREATE POLICY "pred_insert" ON predicciones_desercion FOR INSERT WITH CHECK (true);
+CREATE POLICY "pred_update" ON predicciones_desercion FOR UPDATE USING (true) WITH CHECK (true);
+
+ALTER TABLE alertas ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "alertas_select" ON alertas;
+DROP POLICY IF EXISTS "alertas_insert" ON alertas;
+DROP POLICY IF EXISTS "alertas_update" ON alertas;
+DROP POLICY IF EXISTS "alertas_delete" ON alertas;
+CREATE POLICY "alertas_select" ON alertas FOR SELECT USING (true);
+CREATE POLICY "alertas_insert" ON alertas FOR INSERT WITH CHECK (true);
+CREATE POLICY "alertas_update" ON alertas FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "alertas_delete" ON alertas FOR DELETE USING (true);
+
+-- ============================================================
+-- PASO 1: PERIODO ACADEMICO 2026_2
+-- ============================================================
+INSERT INTO periodos_academicos (id, institucion_id, nombre, tipo, numero, anio, fecha_inicio, fecha_fin, activo)
+VALUES (
+    '00000000-0000-0000-0000-000000000031',
+    '00000000-0000-0000-0000-000000000001',
+    'Cuatrimestre 2026-2',
+    'cuatrimestre',
+    2,
+    2026,
+    '2026-05-01',
+    '2026-08-31',
+    TRUE
+)
+ON CONFLICT (id) DO UPDATE SET activo = TRUE, nombre = EXCLUDED.nombre;
+
+UPDATE periodos_academicos
+  SET activo = FALSE
+  WHERE id != '00000000-0000-0000-0000-000000000031';
+
+-- ============================================================
+-- PASO 2: DOCENTES Y TUTORES
+-- ============================================================
+INSERT INTO usuarios (id, nombre, apellidos, email, rol, activo) VALUES
+    ('00000000-0000-0000-0000-000000000051','Laura','Martinez Rosas','laura.martinez@edupredict.com','docente',TRUE),
+    ('00000000-0000-0000-0000-000000000052','Carlos','Jimenez Ortega','carlos.jimenez@edupredict.com','docente',TRUE),
+    ('00000000-0000-0000-0000-000000000053','Rosa','Fuentes Alvarez','rosa.fuentes@edupredict.com','docente',TRUE),
+    ('00000000-0000-0000-0000-000000000054','Miguel','Torres Herrera','miguel.torres@edupredict.com','tutor',TRUE),
+    ('00000000-0000-0000-0000-000000000055','Ana','Lopez Sandoval','ana.lopez@edupredict.com','tutor',TRUE)
+ON CONFLICT (id) DO UPDATE SET nombre=EXCLUDED.nombre, apellidos=EXCLUDED.apellidos, rol=EXCLUDED.rol, activo=EXCLUDED.activo;
+
+-- ============================================================
+-- PASO 3: ASIGNAR DOCENTES A MATERIAS 2026_2
+-- ============================================================
+INSERT INTO docente_materia (id, docente_id, materia_id, periodo_id, grupo, aula) VALUES
+    ('00000000-0000-0000-0000-000000000211','00000000-0000-0000-0000-000000000051','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','A','Aula 101'),
+    ('00000000-0000-0000-0000-000000000212','00000000-0000-0000-0000-000000000052','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','A','Lab B'),
+    ('00000000-0000-0000-0000-000000000213','00000000-0000-0000-0000-000000000053','00000000-0000-0000-0000-000000000103','00000000-0000-0000-0000-000000000031','A','Aula 203'),
+    ('00000000-0000-0000-0000-000000000214','00000000-0000-0000-0000-000000000051','00000000-0000-0000-0000-000000000104','00000000-0000-0000-0000-000000000031','A','Lab C')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- PASO 4: ASIGNAR TUTORES A ESTUDIANTES
+-- ============================================================
+UPDATE estudiantes SET tutor_id='00000000-0000-0000-0000-000000000054'
+  WHERE id IN ('00000000-0000-0000-0000-000000000063','00000000-0000-0000-0000-000000000065');
+UPDATE estudiantes SET tutor_id='00000000-0000-0000-0000-000000000055'
+  WHERE id='00000000-0000-0000-0000-000000000064';
+
+-- ============================================================
+-- PASO 5: INSCRIPCIONES PERIODO 2026_2
+-- ============================================================
+INSERT INTO inscripciones_periodo (estudiante_id,periodo_id,cuatrimestre_actual,cuatrimestres_retraso,materias_inscritas,turno,grupo) VALUES
+    ('00000000-0000-0000-0000-000000000063','00000000-0000-0000-0000-000000000031',3,0,4,'matutino','A'),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000031',3,0,4,'vespertino','A'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000031',3,1,4,'nocturno','A')
+ON CONFLICT (estudiante_id,periodo_id) DO UPDATE SET
+    cuatrimestre_actual=EXCLUDED.cuatrimestre_actual,
+    cuatrimestres_retraso=EXCLUDED.cuatrimestres_retraso,
+    materias_inscritas=EXCLUDED.materias_inscritas,
+    turno=EXCLUDED.turno,grupo=EXCLUDED.grupo;
+
+-- ============================================================
+-- PASO 6: CALIFICACIONES 2026_2
+-- ============================================================
+INSERT INTO calificaciones (estudiante_id,materia_id,periodo_id,parcial_1,parcial_2,parcial_3,calificacion_final,es_recursada,estado_materia) VALUES
+    -- Mateo (excelente)
+    ('00000000-0000-0000-0000-000000000063','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031',92,88,95,92,FALSE,'en_curso'),
+    ('00000000-0000-0000-0000-000000000063','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031',90,93,91,91,FALSE,'en_curso'),
+    ('00000000-0000-0000-0000-000000000063','00000000-0000-0000-0000-000000000103','00000000-0000-0000-0000-000000000031',87,89,90,89,FALSE,'en_curso'),
+    ('00000000-0000-0000-0000-000000000063','00000000-0000-0000-0000-000000000104','00000000-0000-0000-0000-000000000031',95,94,97,95,FALSE,'en_curso'),
+    -- Valeria (riesgo moderado)
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031',72,58,75,68,FALSE,'en_curso'),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031',78,74,71,74,FALSE,'en_curso'),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000103','00000000-0000-0000-0000-000000000031',65,68,70,68,FALSE,'en_curso'),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000104','00000000-0000-0000-0000-000000000031',70,55,73,66,FALSE,'en_curso'),
+    -- Juan (critico)
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031',48,42,50,47,TRUE,'reprobada'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031',55,50,48,51,FALSE,'reprobada'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000103','00000000-0000-0000-0000-000000000031',40,45,38,41,TRUE,'reprobada'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000104','00000000-0000-0000-0000-000000000031',60,55,52,56,FALSE,'en_curso')
+ON CONFLICT (estudiante_id,materia_id,periodo_id) DO UPDATE SET
+    parcial_1=EXCLUDED.parcial_1,parcial_2=EXCLUDED.parcial_2,parcial_3=EXCLUDED.parcial_3,
+    calificacion_final=EXCLUDED.calificacion_final,es_recursada=EXCLUDED.es_recursada,estado_materia=EXCLUDED.estado_materia;
+
+-- ============================================================
+-- PASO 7: ASISTENCIAS 2026_2
+-- ============================================================
+-- Mateo 100% asistencia
+INSERT INTO asistencias (estudiante_id,materia_id,periodo_id,fecha,asistio)
+SELECT '00000000-0000-0000-0000-000000000063',m.id,'00000000-0000-0000-0000-000000000031',g::date,TRUE
+FROM unnest(ARRAY['00000000-0000-0000-0000-000000000101'::uuid,'00000000-0000-0000-0000-000000000102'::uuid,'00000000-0000-0000-0000-000000000103'::uuid,'00000000-0000-0000-0000-000000000104'::uuid]) AS m(id),
+     generate_series('2026-05-05'::date,'2026-06-09'::date,'7 days'::interval) AS g
+ON CONFLICT (estudiante_id,materia_id,fecha) DO NOTHING;
+
+-- Valeria 75% asistencia
+INSERT INTO asistencias (estudiante_id,materia_id,periodo_id,fecha,asistio) VALUES
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-05-05',TRUE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-05-12',FALSE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-05-19',TRUE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-05-26',TRUE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-06-02',FALSE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-06-09',TRUE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-05-05',TRUE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-05-12',TRUE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-05-19',FALSE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-05-26',TRUE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-06-02',TRUE),
+    ('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-06-09',TRUE)
+ON CONFLICT (estudiante_id,materia_id,fecha) DO NOTHING;
+
+-- Juan 35% asistencia (critico)
+INSERT INTO asistencias (estudiante_id,materia_id,periodo_id,fecha,asistio,motivo_falta) VALUES
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-05-05',FALSE,'Trabajo'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-05-12',FALSE,'Sin transporte'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-05-19',TRUE,NULL),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-05-26',FALSE,'Salud'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-06-02',FALSE,'No reporto'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000101','00000000-0000-0000-0000-000000000031','2026-06-09',TRUE,NULL),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-05-05',FALSE,'Trabajo'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-05-12',TRUE,NULL),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-05-19',FALSE,'Sin transporte'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-05-26',FALSE,'No reporto'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-06-02',FALSE,'Salud'),
+    ('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000102','00000000-0000-0000-0000-000000000031','2026-06-09',TRUE,NULL)
+ON CONFLICT (estudiante_id,materia_id,fecha) DO NOTHING;
+
+-- ============================================================
+-- PASO 8: CALCULAR RESUMEN ACADEMICO 2026_2
+-- ============================================================
+SELECT fn_calcular_resumen('00000000-0000-0000-0000-000000000063','00000000-0000-0000-0000-000000000031');
+SELECT fn_calcular_resumen('00000000-0000-0000-0000-000000000064','00000000-0000-0000-0000-000000000031');
+SELECT fn_calcular_resumen('00000000-0000-0000-0000-000000000065','00000000-0000-0000-0000-000000000031');
+
+-- ============================================================
+-- PASO 9: VERIFICACION FINAL
+-- ============================================================
+SELECT 'PERIODO 2026_2' as check, count(*) FROM periodos_academicos WHERE id='00000000-0000-0000-0000-000000000031'
+UNION ALL SELECT 'DOCENTES+TUTORES', count(*) FROM usuarios WHERE rol IN ('docente','tutor')
+UNION ALL SELECT 'ASIGNACIONES 2026_2', count(*) FROM docente_materia WHERE periodo_id='00000000-0000-0000-0000-000000000031'
+UNION ALL SELECT 'INSCRIPCIONES 2026_2', count(*) FROM inscripciones_periodo WHERE periodo_id='00000000-0000-0000-0000-000000000031'
+UNION ALL SELECT 'CALIFICACIONES 2026_2', count(*) FROM calificaciones WHERE periodo_id='00000000-0000-0000-0000-000000000031'
+UNION ALL SELECT 'ASISTENCIAS 2026_2', count(*) FROM asistencias WHERE periodo_id='00000000-0000-0000-0000-000000000031'
+UNION ALL SELECT 'RESUMEN_ACADEMICO 2026_2', count(*) FROM resumen_academico WHERE periodo_id='00000000-0000-0000-0000-000000000031';

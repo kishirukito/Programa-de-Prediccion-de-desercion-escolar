@@ -174,7 +174,11 @@ export default function AlertasPage() {
                         <td><span className={`badge ${nivel.cls} badge-dot`}>{nivel.label}</span></td>
                         <td style={{ maxWidth: 200 }}><div style={{ fontSize: '0.8rem', color: 'var(--gray-700)', whiteSpace: 'normal' }}>{a.motivo}</div></td>
                         <td><span className={`badge ${estado.cls} badge-dot`}>{estado.label}</span></td>
-                        <td style={{ fontSize: '0.8rem', color: 'var(--gray-600)' }}><span style={{ color: 'var(--gray-400)' }}>Sin tutor</span></td>
+                        <td style={{ fontSize: '0.8rem', color: 'var(--gray-600)' }}>
+                          {a.tutor_nombre
+                            ? <span style={{ color: 'var(--gray-700)', fontWeight: 500 }}>{a.tutor_nombre}</span>
+                            : <span style={{ color: 'var(--gray-400)' }}>Sin tutor</span>}
+                        </td>
                         <td style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>{fmtDate(a.fecha)}</td>
                         <td style={{ textAlign: 'right' }}>
                           <button className="btn btn-ghost btn-sm" onClick={() => openModal(a)} style={{ color: 'var(--primary-600)' }}>

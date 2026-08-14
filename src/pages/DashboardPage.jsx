@@ -267,7 +267,8 @@ function ModalAlertas({ count, onClose }) {
 export default function DashboardPage() {
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
-  const [periodo, setPeriodo] = useState('2026-1');
+  const [error, setError]   = useState(null);
+  const [periodo, setPeriodo] = useState('');
   const [grupo, setGrupo]   = useState('');
 
   // Modales
@@ -278,13 +279,30 @@ export default function DashboardPage() {
   const [modalAlertas,   setModalAlertas]   = useState(false);
   const [modalEstudiantes,setModalEst]      = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = async (periodoId = periodo) => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await api.dashboard(`?periodo=${periodo}${grupo ? `&grupo_id=${grupo}` : ''}`);
-      if (res?.success) setData(res);
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+      const params = [
+        periodoId ? `periodo=${periodoId}` : '',
+        grupo     ? `grupo_id=${grupo}`    : '',
+      ].filter(Boolean).join('&');
+      const res = await api.dashboard(params ? `?${params}` : '');
+      if (res?.success) {
+        setData(res);
+        // If no period selected yet, default to the first period returned by the API
+        if (!periodoId && res.filtros?.periodo_actual) {
+          setPeriodo(res.filtros.periodo_actual);
+        }
+      } else {
+        setError(res?.message || 'No se pudieron cargar los datos.');
+      }
+    } catch (e) {
+      console.error(e);
+      setError(e.message || 'Error de conexión con el servidor.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -336,7 +354,10 @@ export default function DashboardPage() {
           <div className="filter-group">
             <label>PERIODO</label>
             <select value={periodo} onChange={e => setPeriodo(e.target.value)}>
-              {(filtros.periodos || ['2026-1','2025-2']).map(p => <option key={p} value={p}>{p}</option>)}
+              <option value="">Todos los periodos</option>
+              {(filtros.periodos || []).map(p => (
+                <option key={p.id} value={p.id}>{p.nombre}</option>
+              ))}
             </select>
           </div>
           <div className="filter-group">
@@ -348,11 +369,18 @@ export default function DashboardPage() {
               ))}
             </select>
           </div>
-          <button className="btn btn-primary" onClick={fetchData}>
+          <button className="btn btn-primary" onClick={() => fetchData()}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             Actualizar
           </button>
         </div>
+
+        {error && (
+          <div style={{ margin: '1rem 0', padding: '0.875rem 1rem', borderRadius: 'var(--border-radius)', background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {error}
+          </div>
+        )}
 
         {loading ? (
           <p style={{ color: 'var(--gray-500)', padding: '2rem' }}>Cargando...</p>
