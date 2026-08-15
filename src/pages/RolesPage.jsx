@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../components/TopHeader';
 import { api } from '../api';
-
+import TableLoader from '../components/TableLoader';
 const PERMISOS = {
   'Dashboard':   [{ id:1, nombre:'dashboard.ver', descripcion:'Ver dashboard principal' }],
   'Alumnos':     [{ id:2, nombre:'alumnos.ver', descripcion:'Ver listado de alumnos' }, { id:3, nombre:'alumnos.crear', descripcion:'Registrar nuevos alumnos' }, { id:4, nombre:'alumnos.editar', descripcion:'Editar información de alumnos' }],
@@ -108,7 +108,7 @@ export default function RolesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {loading ? <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>Cargando...</td></tr>
+                  {loading ? <TableLoader cols={4} rows={5} />
                   : roles.length === 0 ? <tr><td colSpan="4"><div className="empty-state"><h3>No hay roles</h3></div></td></tr>
                   : roles.map((r, i) => (
                     <tr key={i}>

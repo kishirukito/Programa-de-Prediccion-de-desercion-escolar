@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../components/TopHeader';
+import { PageLoader } from '../components/TableLoader';
 import { api } from '../api';
 
 /* ──────────────────────────────────────────
@@ -383,7 +384,7 @@ export default function DashboardPage() {
         )}
 
         {loading ? (
-          <p style={{ color: 'var(--gray-500)', padding: '2rem' }}>Cargando...</p>
+          <PageLoader text="Cargando dashboard..." />
         ) : (
           <>
             {/* Stat cards — clickeables */}

@@ -593,6 +593,8 @@ a:hover { color: var(--primary-700); }
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 .main-header {
@@ -678,6 +680,7 @@ a:hover { color: var(--primary-700); }
 .page-content {
     padding: 1.5rem;
     flex: 1;
+    min-width: 0;
 }
 
 /* =====================================================
@@ -746,6 +749,12 @@ a:hover { color: var(--primary-700); }
     border-radius: var(--border-radius-lg);
     border: 1px solid var(--gray-200);
     box-shadow: var(--shadow-sm);
+}
+
+/* Card con tabla horizontal — evita que desborde el layout */
+.card-overflow-x {
+    min-width: 0;
+    overflow: hidden;
 }
 
 .card-body {
@@ -2020,4 +2029,51 @@ tbody tr:last-child td {
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+}
+
+/* =====================================================
+   LOADING — Spinner y Skeleton
+   ===================================================== */
+
+/* Spinner centrado para reemplazar "Sin datos" mientras carga */
+.loading-spinner-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    gap: 0.875rem;
+    color: var(--gray-400);
+    font-size: 0.85rem;
+}
+
+.loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--gray-200);
+    border-top-color: var(--primary-500);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Skeleton de filas de tabla */
+.skeleton-row td {
+    padding: 0.7rem 1rem;
+}
+
+.skeleton-cell {
+    height: 14px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-200) 50%, var(--gray-100) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite;
+}
+
+@keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }

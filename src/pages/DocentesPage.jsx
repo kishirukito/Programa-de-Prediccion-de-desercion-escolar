@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../components/TopHeader';
 import { api } from '../api';
-
+import TableLoader from '../components/TableLoader';
 export default function DocentesPage() {
   const [tab, setTab]               = useState('asignaciones');
   const [asignaciones, setAsig]     = useState([]);
@@ -139,7 +139,7 @@ export default function DocentesPage() {
                   </thead>
                   <tbody>
                     {loading
-                      ? <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>Cargando...</td></tr>
+                      ? <TableLoader cols={5} rows={5} />
                       : asigFil.length === 0
                         ? <tr><td colSpan="5"><div className="empty-state"><h3>No hay asignaciones</h3><p>Agrega una asignación docente-grupo-materia</p></div></td></tr>
                         : asigFil.map(a => (

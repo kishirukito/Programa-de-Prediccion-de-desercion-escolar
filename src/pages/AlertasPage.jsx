@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../components/TopHeader';
 import { api } from '../api';
+import TableLoader from '../components/TableLoader';
 
 const nivelConfig = {
   critico: { label: 'Crítico', cls: 'badge-risk-critical' },
@@ -154,7 +155,7 @@ export default function AlertasPage() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>Cargando...</td></tr>
+                    <TableLoader cols={7} rows={5} />
                   ) : alertas.length === 0 ? (
                     <tr><td colSpan="7">
                       <div className="empty-state">

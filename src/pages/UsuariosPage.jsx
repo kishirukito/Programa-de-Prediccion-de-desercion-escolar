@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../components/TopHeader';
 import { api } from '../api';
-
-const myId = JSON.parse(localStorage.getItem('user') || '{}')?.id || 1;
+import TableLoader from '../components/TableLoader';
 
 export default function UsuariosPage() {
   const [all, setAll]       = useState([]);
@@ -111,7 +110,7 @@ export default function UsuariosPage() {
               </thead>
               <tbody>
                 {loading
-                  ? <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>Cargando...</td></tr>
+                  ? <TableLoader cols={6} rows={5} />
                   : usuarios.length === 0
                     ? <tr><td colSpan="6"><div className="empty-state"><h3>No hay usuarios</h3><p>Crea un nuevo usuario para comenzar</p></div></td></tr>
                     : usuarios.map(u => {
@@ -218,3 +217,5 @@ export default function UsuariosPage() {
     </div>
   );
 }
+
+const myId = JSON.parse(localStorage.getItem('user') || '{}')?.id || 1;

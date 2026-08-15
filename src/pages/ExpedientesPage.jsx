@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../components/TopHeader';
 import { api } from '../api';
+import TableLoader from '../components/TableLoader';
 
 const nivelConfig = {
   critico:   { label: 'Crítico',   cls: 'badge badge-risk-critical badge-dot' },
@@ -150,22 +151,9 @@ function ExpedienteModal({ alumno, onClose, onAnalizar, loadingDetalle }) {
           </div>
         </div>
 
-        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--primary-600)' }}>{msg}</div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-secondary" onClick={onClose}>Cerrar</button>
-            <button 
-              className="btn btn-primary" 
-              onClick={triggerIA} 
-              disabled={calculating} 
-              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="13" height="13">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-              </svg>
-              {calculating ? 'Analizando...' : 'Analizar con IA'}
-            </button>
-          </div>
+          <button className="btn btn-secondary" onClick={onClose}>Cerrar</button>
         </div>
       </div>
     </div>
@@ -397,7 +385,7 @@ export default function ExpedientesPage() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--gray-500)' }}>Cargando expedientes...</td></tr>
+                    <TableLoader cols={5} rows={7} />
                   ) : filtrados.length === 0 ? (
                     <tr><td colSpan="5">
                       <div className="empty-state">

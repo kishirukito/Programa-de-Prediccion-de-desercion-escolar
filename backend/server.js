@@ -1,10 +1,14 @@
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+dotenv.config({ path: join(__dirname, '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -1394,6 +1398,142 @@ app.get('/api/reportes', requireAuth, async (req, res) => {
   // Reusar la misma lógica del preview
   const qs = new URLSearchParams({ ...(tipo && { tipo }), ...(nivel && { nivel }), ...(estado && { estado }) }).toString();
   return res.redirect(307, `/api/reportes/preview${qs ? '?' + qs : ''}`);
+});
+
+// ── Helper: construir payload para la IA desde un resumen_academico ──
+function buildIAPayload(resumen) {
+  const turnoMap = { matutino: 0, vespertino: 1, nocturno: 2, mixto: 3 };
+  return {
+    promedio_general:          parseFloat(resumen.promedio_general)          || 0.0,
+    promedio_actual:           parseFloat(resumen.promedio_actual)           || 0.0,
+    asistencia_promedio:       parseFloat(resumen.asistencia_promedio) > 1.0
+      ? parseFloat(resumen.asistencia_promedio) / 100.0
+      : parseFloat(resumen.asistencia_promedio) || 0.0,
+    materias_reprobadas:       parseInt(resumen.materias_reprobadas)         || 0,
+    materias_recursadas:       parseInt(resumen.materias_recursadas)         || 0,
+    materias_inscritas:        parseInt(resumen.materias_inscritas)          || 0,
+    materias_aprobadas:        parseInt(resumen.materias_aprobadas)          || 0,
+    cuatrimestre_actual:       parseInt(resumen.cuatrimestre_actual)         || 1,
+    cuatrimestres_retraso:     parseInt(resumen.cuatrimestres_retraso)       || 0,
+    parciales_reprobados:      parseInt(resumen.parciales_reprobados)        || 0,
+    calificacion_minima_parcial: parseFloat(resumen.calificacion_minima_parcial) || 0.0,
+    calificacion_maxima_parcial: parseFloat(resumen.calificacion_maxima_parcial) || 0.0,
+    beneficiario_beca:         resumen.beneficiario_beca ? 1 : 0,
+    turno:                     turnoMap[resumen.turno] !== undefined ? turnoMap[resumen.turno] : 0,
+    preferencia_carrera:       Math.max(0, (parseInt(resumen.preferencia_carrera) || 1) - 1),
+    foraneo:                   resumen.foraneo  ? 1 : 0,
+    trabaja:                   resumen.trabaja  ? 1 : 0,
+    edad_ingreso:              parseInt(resumen.edad_ingreso) || 18,
+  };
+}
+
+// ── Helper: llamar a la IA y obtener predicción ──
+async function predecirConIA(payload) {
+  try {
+    const response = await fetch('http://localhost:8000/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (response.ok) return await response.json();
+  } catch (_) {}
+  // Fallback local
+  const asist = payload.asistencia_promedio;
+  const prob  = Math.min(1.0, Math.max(0.0, (payload.materias_reprobadas * 0.2) + (1.0 - asist) * 0.5));
+  const risk  = prob > 0.70 ? 'riesgo_critico' : prob > 0.40 ? 'riesgo_moderado' : prob > 0.20 ? 'alerta_temprana' : 'estable';
+  return { success: true, probabilidad_desercion: prob, estado_riesgo: risk, simulado: true };
+}
+
+// ═══════════════════════════════════════
+// REPORTES — Análisis masivo con IA
+// ═══════════════════════════════════════
+app.post('/api/reportes/analizar-ia', requireAuth, async (req, res) => {
+  if (!supabase) return res.status(503).json({ success: false, message: 'Base de datos no disponible' });
+  try {
+    const { nivel } = req.query;
+
+    // 1. Leer todos los resúmenes con los datos reales de la BD
+    let q = supabase.from('resumen_academico').select(`
+      id, estudiante_id, periodo_id,
+      promedio_general, promedio_actual, asistencia_promedio,
+      materias_reprobadas, materias_recursadas, materias_inscritas, materias_aprobadas,
+      cuatrimestre_actual, cuatrimestres_retraso, parciales_reprobados,
+      calificacion_minima_parcial, calificacion_maxima_parcial,
+      beneficiario_beca, turno, preferencia_carrera, foraneo, trabaja, edad_ingreso,
+      estado_riesgo, probabilidad_desercion,
+      estudiante:estudiantes(
+        matricula, nombre, apellido_paterno,
+        turno, foraneo, trabaja,
+        carrera:carreras(clave_programa)
+      )
+    `).limit(300);
+
+    if (nivel) {
+      const m = { critico:'riesgo_critico', alto:'riesgo_moderado', medio:'alerta_temprana', bajo:'estable' };
+      if (m[nivel]) q = q.eq('estado_riesgo', m[nivel]);
+    }
+
+    const { data: resumenes, error } = await q;
+    if (error) throw error;
+    if (!resumenes?.length) return res.json({ success: true, titulo: 'Análisis IA — Estudiantes en Riesgo', columnas: [], data: [], total: 0 });
+
+    // 2. Para cada alumno, usar datos reales de BD y llamar a la IA
+    const resultados = await Promise.all(resumenes.map(async (r) => {
+      // Merge: datos del resumen + datos del estudiante (turno, foraneo, trabaja vienen del estudiante)
+      const dataCompleta = {
+        ...r,
+        turno:             r.turno           || r.estudiante?.turno    || 'matutino',
+        foraneo:           r.foraneo         ?? r.estudiante?.foraneo  ?? false,
+        trabaja:           r.trabaja         ?? r.estudiante?.trabaja  ?? false,
+        beneficiario_beca: r.beneficiario_beca ?? false,   // solo en resumen_academico
+      };
+
+      const payload = buildIAPayload(dataCompleta);
+      const pred    = await predecirConIA(payload);
+
+      // Actualizar BD con la predicción fresca
+      if (pred?.success !== false) {
+        await supabase.from('resumen_academico').update({
+          probabilidad_desercion: pred.probabilidad_desercion,
+          estado_riesgo:          pred.estado_riesgo,
+          fecha_prediccion:       new Date().toISOString(),
+          modelo_version:         (pred.model_used || '1.0').slice(0, 20),
+        }).eq('id', r.id);
+      }
+
+      const nivelLabel = { riesgo_critico:'Crítico', riesgo_moderado:'Alto', alerta_temprana:'Medio', estable:'Bajo' };
+      const pct = (pred.probabilidad_desercion * 100).toFixed(1);
+      const asistPct = dataCompleta.asistencia_promedio > 1
+        ? dataCompleta.asistencia_promedio.toFixed(1)
+        : (dataCompleta.asistencia_promedio * 100).toFixed(1);
+
+      return [
+        r.estudiante?.matricula || '—',
+        `${r.estudiante?.nombre || ''} ${r.estudiante?.apellido_paterno || ''}`.trim(),
+        r.estudiante?.carrera?.clave_programa || '—',
+        dataCompleta.cuatrimestre_actual || '—',
+        dataCompleta.promedio_actual     != null ? Number(dataCompleta.promedio_actual).toFixed(1)  : 'N/A',
+        `${asistPct}%`,
+        dataCompleta.materias_reprobadas ?? 0,
+        `${pct}%`,
+        nivelLabel[pred.estado_riesgo]   || 'Sin datos',
+        pred.simulado ? 'Estimado' : 'Modelo IA',
+      ];
+    }));
+
+    res.json({
+      success: true,
+      titulo: 'Análisis IA — Predicción de Deserción',
+      columnas: ['Matrícula', 'Alumno', 'Carrera', 'Cuatrimestre', 'Promedio', 'Asistencia', 'Mat. Reprob.', 'Prob. Deserción', 'Nivel Riesgo', 'Fuente'],
+      data: resultados,
+      total: resultados.length,
+      ia_activa: true,
+    });
+  } catch (e) {
+    console.error('[ANALIZAR-IA]', e.message);
+    res.status(500).json({ success: false, message: e.message });
+  }
 });
 
 // ═══════════════════════════════════════

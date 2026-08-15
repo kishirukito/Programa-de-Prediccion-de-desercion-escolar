@@ -230,10 +230,17 @@ function TabCalificaciones({ alumnos, loading, numParciales, setNumParciales, ma
                       <div style={{ fontSize: '0.75rem', color: 'var(--gray-500)' }}>{a.matricula}</div>
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <input type="number" className="grade-input" min="0" max="100" step="0.1"
-                        value={val} placeholder="—"
-                        onChange={e => upd(a.id, e.target.value)}
-                        style={{ textAlign: 'center', width: 80 }} />
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem' }}>
+                        <input type="number" className="grade-input" min="0" max="100" step="0.1"
+                          value={val} placeholder="—"
+                          onChange={e => upd(a.id, e.target.value)}
+                          style={{ textAlign: 'center', width: 80 }} />
+                        <span style={{
+                          fontSize: '0.7rem', fontWeight: 700, color: 'var(--gray-400)',
+                          background: 'var(--gray-100)', border: '1px solid var(--gray-200)',
+                          borderRadius: '999px', padding: '1px 7px', whiteSpace: 'nowrap', lineHeight: '1.6'
+                        }}>/100</span>
+                      </div>
                     </td>
                     <td style={{ textAlign: 'center' }}><span className={diagCls(diag)}>{diag}</span></td>
                     {Array.from({ length: numParciales }, (_, i) => i + 1).filter(p => p !== parcial).map(p => (
@@ -301,6 +308,7 @@ function TabAsistencias({ alumnos, loading, numParciales, materiaId, grupoId, pe
 
   const [rangos, setRangosState]    = useState(() => initRangos(numParciales));
   const [showConfig, setShowConfig] = useState(false);
+  const [parcialActivo, setParcialActivo] = useState(1);
   const [asist, setAsist]           = useState({});
   const [loadingAsist, setLoadingAsist] = useState(false);
   const [saving, setSaving]         = useState(false);
@@ -318,7 +326,10 @@ function TabAsistencias({ alumnos, loading, numParciales, materiaId, grupoId, pe
 
   // Cuando cambia numParciales, cargar desde localStorage o regenerar
   // También recargar cuando cambia grupo o materia
-  useEffect(() => { setRangosState(initRangos(numParciales)); }, [numParciales, grupoId, materiaId, periodoInicio, periodoFin]);
+  useEffect(() => {
+    setRangosState(initRangos(numParciales));
+    setParcialActivo(1);
+  }, [numParciales, grupoId, materiaId, periodoInicio, periodoFin]);
 
   // Cargar asistencias existentes cuando cambia materia o periodo
   useEffect(() => {
@@ -408,6 +419,9 @@ function TabAsistencias({ alumnos, loading, numParciales, materiaId, grupoId, pe
   }));
   const totalDias = parcialDias.reduce((s, p) => s + p.dias.length, 0);
 
+  // Solo mostrar el parcial activo en la tabla
+  const parcialDiasVisibles = parcialDias.filter((_, i) => i + 1 === parcialActivo);
+
   const msgColor = msg.type === 'error' ? 'var(--danger)' : msg.type === 'warn' ? 'var(--warning)' : 'var(--success)';
 
   if (loading || loadingAsist) return <p style={{ padding: '2rem', color: 'var(--gray-500)', textAlign: 'center' }}>Cargando...</p>;
@@ -428,6 +442,26 @@ function TabAsistencias({ alumnos, loading, numParciales, materiaId, grupoId, pe
             Hoy: {HOY}
           </span>
         </span>
+
+        {/* Selector de parcial */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--gray-100)', borderRadius: 'var(--border-radius)', padding: '3px' }}>
+          {rangos.map((r, i) => (
+            <button
+              key={i}
+              onClick={() => setParcialActivo(i + 1)}
+              style={{
+                padding: '4px 14px', borderRadius: 'var(--border-radius-sm)', border: 'none', cursor: 'pointer',
+                fontSize: '0.8rem', fontWeight: 600, transition: 'all 0.15s',
+                background: parcialActivo === i + 1 ? '#fff' : 'transparent',
+                color: parcialActivo === i + 1 ? 'var(--primary-600)' : 'var(--gray-500)',
+                boxShadow: parcialActivo === i + 1 ? 'var(--shadow-sm)' : 'none',
+              }}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+
         <button className="btn btn-secondary btn-sm" onClick={() => setShowConfig(!showConfig)}>
           Configurar rangos
         </button>
@@ -482,21 +516,21 @@ function TabAsistencias({ alumnos, loading, numParciales, materiaId, grupoId, pe
       )}
 
       {!alumnos.length ? <div className="empty-state"><p>Selecciona un grupo.</p></div> : (
-        <div style={{ overflowX: 'auto', padding: '0 1.25rem 1.25rem' }}>
+        <div style={{ overflowX: 'auto', overflowY: 'visible', padding: '0 1.25rem 1.25rem', maxWidth: '100%', width: '100%' }}>
           <table className="asist-calendar">
             <thead>
               <tr>
                 <th className="alumno-cell" rowSpan={2} style={{ minWidth: 160 }}>Alumno</th>
-                {parcialDias.map((p, pi) => (
+                {parcialDiasVisibles.map((p, pi) => (
                   <th key={pi} colSpan={p.dias.length} className="parcial-header"
-                    style={{ textAlign: 'center', background: `hsl(${220 + pi*40},70%,95%)`, color: `hsl(${220 + pi*40},60%,35%)` }}>
+                    style={{ textAlign: 'center', background: `hsl(${220 + (parcialActivo-1)*40},70%,95%)`, color: `hsl(${220 + (parcialActivo-1)*40},60%,35%)` }}>
                     {p.label} ({p.dias.length}d)
                   </th>
                 ))}
                 <th style={{ textAlign: 'center', minWidth: 60, background: 'var(--gray-50)' }}>% Asist.</th>
               </tr>
               <tr>
-                {parcialDias.map(p => p.dias.map(d => {
+                {parcialDiasVisibles.map(p => p.dias.map(d => {
                   const k = d.toISOString().slice(0, 10);
                   const cls = clasificarFecha(k);
                   const esHoy = cls === 'hoy';
@@ -535,7 +569,7 @@ function TabAsistencias({ alumnos, loading, numParciales, materiaId, grupoId, pe
                       <div style={{ fontWeight: 500, fontSize: '0.8rem', color: 'var(--gray-800)' }}>{a.nombre} {a.apellido_paterno}</div>
                       <div style={{ fontSize: '0.7rem', color: 'var(--gray-400)' }}>{a.matricula}</div>
                     </td>
-                    {parcialDias.map(p => p.dias.map(d => {
+                    {parcialDiasVisibles.map(p => p.dias.map(d => {
                       const k = d.toISOString().slice(0, 10);
                       const v = getVal(a.id, k);
                       const cls = clasificarFecha(k);
@@ -682,7 +716,7 @@ export default function CapturPage() {
         </div>
 
         {/* Card con tabs */}
-        <div className="card">
+        <div className="card card-overflow-x">
           <div className="captura-tabs">
             {TABS.map(t => (
               <button key={t.id}

@@ -76,6 +76,7 @@ export const api = {
   // Reportes
   reportesDatos: () => apiFetch('/reportes/datos'),
   generarReporte: (tipo, extra = '') => apiFetch(`/reportes/preview?tipo=${tipo}${extra}`),
+  analizarConIA: (nivel = '') => apiFetch(`/reportes/analizar-ia${nivel ? `?nivel=${nivel}` : ''}`, { method: 'POST', body: '{}' }),
 
   // Supabase
   supabaseStatus: () => apiFetch('/supabase/status'),
